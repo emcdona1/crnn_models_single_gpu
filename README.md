@@ -50,7 +50,7 @@ Starting the tuning:
   * Specify the max number of trials to conduct (longer, more expensive), and the number of parallel trials (faster, but search won't be conducted as efficiently).
 * 5. Compute and pricing:
   * Specify at least one machine (n1-standard-4 is plenty for IAM dataset).
-  * Recommended to select an accelerator (GPU).  (Tesla-T4 for 60 trials, 3 parallel, 15 epochs each, took ~30 hours and cost ~$250.)
+  * Recommended to select an accelerator (GPU).  (Training on a Tesla-V100 GPU for 60 trials, 3 parallel, 15 epochs each, took ~30 hours and cost ~$250.)
 * Click Start Training.
 
 -----
