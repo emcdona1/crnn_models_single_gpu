@@ -6,5 +6,5 @@ IMAGE="iam-tuned"
 TAG="run_41"
 IMAGE_URI="$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$IMAGE:$TAG"
 
-docker build ./ -t $IMAGE_URI
+docker build ./one_model_trainer/ -t $IMAGE_URI
 docker push $IMAGE_URI
