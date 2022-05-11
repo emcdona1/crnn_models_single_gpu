@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import argparse
 import tensorflow as tf
+import pandas as pd
 from tensorflow.keras import layers
 from trainer.create_dataset import create_dataset
 from trainer.create_model import create_model
