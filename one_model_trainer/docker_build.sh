@@ -3,8 +3,8 @@ PROJECT_ID="handwriting-keras-tuner"
 REGION="us-central1"
 REPO="word-models"
 IMAGE="iam-tuned"
-TAG="run_41"
+TAG="run_41_git"
 IMAGE_URI="$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$IMAGE:$TAG"
 
-docker build ./ -t $IMAGE_URI
+docker build . --file one_model_trainer/Dockerfile -t $IMAGE_URI
 docker push $IMAGE_URI
