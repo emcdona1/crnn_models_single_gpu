@@ -1,6 +1,6 @@
 .gitignore
 .ipynb_checkpoints/
-IAM_Words/
+IAM_Words*/
 one_model_trainer/__pycache__/
 one_model_trainer/.ipynb_checkpoints/
 one_model_trainer/task.ipynb
