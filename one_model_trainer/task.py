@@ -13,14 +13,17 @@ tf.random.set_seed(c.SEED)
 
 ###################################################################
 # SET ALL THE HYPERPARAMETERS HERE, WHICH WERE DETERMINED IN TUNING
-NAME = 'run_41_tuned'
+NAME = 'run_55_train'  # change the name
+# NAME = 'run_41'
 BATCH_SIZE=128
 KERNEL_SIZE=4
 ACTIVATION_FUNCTION='relu'
 LEARNING_RATE=0.001
-DROPOUT=0.1
+DROPOUT=0.12489316869910207
+# DROPOUT=0.1
 NUM_UNITS_DENSE=256
-NUM_UNITS_LTSM1=768
+NUM_UNITS_LTSM1=512
+# NUM_UNITS_LTSM1=768
 NUM_UNITS_LTSM2=1024
 ###################################################################
 
