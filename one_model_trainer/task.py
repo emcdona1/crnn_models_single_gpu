@@ -13,8 +13,7 @@ tf.random.set_seed(c.SEED)
 
 ###################################################################
 # SET ALL THE HYPERPARAMETERS HERE, WHICH WERE DETERMINED IN TUNING
-NAME = 'run_55_train'  # change the name
-# NAME = 'run_41'
+NAME = 'dummy'  # 'run_55_train'  # change the name
 BATCH_SIZE=128
 KERNEL_SIZE=4
 ACTIVATION_FUNCTION='relu'
@@ -25,8 +24,7 @@ NUM_UNITS_DENSE=256
 NUM_UNITS_LTSM1=512
 # NUM_UNITS_LTSM1=768
 NUM_UNITS_LTSM2=1024
-###################################################################
-
+""
 
 def get_args(manual_args=None):
     '''Parses args. Must include all hyperparameters you want to specify.'''
@@ -86,7 +84,7 @@ def main():
 
 
 
-    results_folder = Path('results')
+    results_folder = Path(os.getenv("AIP_MODEL_DIR"))
     if not os.path.exists(results_folder):
         os.makedirs(results_folder)
 
@@ -94,8 +92,8 @@ def main():
     history_filename = f'{NAME}-training_history.csv'
     training_history.to_csv(Path(results_folder, history_filename))
 
-    training_model_name = f'{NAME}-trained'
-    model.save(Path(results_folder, f'{training_model_name}.h5'))
+    # training_model_name = f'{NAME}-trained'
+    # model.save(Path(results_folder, f'{training_model_name}.h5'))
 
     # create and save prediction model
     prediction_model = tf.keras.models.Model(
