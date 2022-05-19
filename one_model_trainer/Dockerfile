@@ -7,8 +7,8 @@ WORKDIR /
 # Copies the trainer code to the docker image.
 COPY one_model_trainer /trainer
 # COPY IAM_Words /IAM_Words
-# COPY IAM_Words_train /IAM_Words 
-COPY IAM_Words /IAM_Words_test
+COPY IAM_Words_train /IAM_Words 
+# COPY IAM_Words_test /IAM_Words
 
 # Sets up the entry point to invoke the trainer.
 ENTRYPOINT ["python", "-m", "trainer.task"]
