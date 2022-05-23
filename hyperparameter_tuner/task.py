@@ -37,15 +37,15 @@ def get_args():
       type=int,
       help='number of units in 1st dense layer')
     parser.add_argument(
-      '--num_units_ltsm1',
+      '--num_units_lstm1',
       required=True,
       type=int,
-      help='number of units in 1st LTSM bidirectional layer')
+      help='number of units in 1st LSTM bidirectional layer')
     parser.add_argument(
-      '--num_units_ltsm2',
+      '--num_units_lstm2',
       required=True,
       type=int,
-      help='number of units in 2nd LTSM bidirectional layer')
+      help='number of units in 2nd LSTM bidirectional layer')
     parser.add_argument(
       '--learning_rate',
       required=True,
@@ -61,7 +61,7 @@ def main():
     args = get_args()
     train_data, validation_data = create_dataset(args.batch_size)
     model = create_model(args.kernel_size, args.activation, args.num_units_dense1, args.dropout, 
-                         args.num_units_ltsm1, args.num_units_ltsm2, args.learning_rate)
+                         args.num_units_lstm1, args.num_units_lstm2, args.learning_rate)
     history = model.fit(train_data, epochs=c.NUM_EPOCHS, validation_data=validation_data)
 
     # DEFINE METRIC

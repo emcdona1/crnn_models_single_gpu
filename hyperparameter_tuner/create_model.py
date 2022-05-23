@@ -27,7 +27,7 @@ class CTCLayer(layers.Layer):
         return y_pred
 
 
-def create_model(kernel_size: int, activation: str, num_units_dense1: int, dropout: float, num_units_ltsm1: int, num_units_ltsm2: int, learning_rate: float):
+def create_model(kernel_size: int, activation: str, num_units_dense1: int, dropout: float, num_units_lstm1: int, num_units_lstm2: int, learning_rate: float):
     '''Defines and compiles model.'''
     c = TrainerConfiguration()
     # Inputs to the model
@@ -56,8 +56,8 @@ def create_model(kernel_size: int, activation: str, num_units_dense1: int, dropo
     x = layers.Dropout(dropout)(x)
 
     # RNNs
-    x = layers.Bidirectional(layers.LSTM(num_units_ltsm1, return_sequences=True, dropout=0.25, name='bidirect1'))(x)
-    x = layers.Bidirectional(layers.LSTM(num_units_ltsm2, return_sequences=True, dropout=0.25, name='bidirect2'))(x)
+    x = layers.Bidirectional(layers.LSTM(num_units_lstm1, return_sequences=True, dropout=0.25, name='bidirect1'))(x)
+    x = layers.Bidirectional(layers.LSTM(num_units_lstm2, return_sequences=True, dropout=0.25, name='bidirect2'))(x)
 
     # Output layer
     x = layers.Dense(len(c.char_to_num.get_vocabulary()) + 1, activation='softmax', name='dense_layer')(x)
