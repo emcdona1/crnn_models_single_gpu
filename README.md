@@ -25,8 +25,10 @@ The code in this repository has been used to perform hyperparameter tuning, mode
 3. In the same Terminal window, paste and run your configure Docker command.
 9. Copy the image set (including metadata) into the workspace. (using a Terminal window, e.g. `gsutil -m cp -r gs://fmnh_datasets/IAM_Words ./`)
 
+-----
 
 See modules for specific steps after setup.
+
 -----
 
 ## Contributors and licensing
