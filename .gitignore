@@ -6,3 +6,5 @@ one_model_trainer/.ipynb_checkpoints/
 one_model_trainer/task.ipynb
 hyperparameter_tuner/__pycache__/
 hyperparameter_tuner/.ipynb_checkpoints/
+test_classification/model/*
+test_classification/IAM_Words_*
