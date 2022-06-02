@@ -1,8 +1,6 @@
 # Training a single model
 
-0. Optional: Create nonoverlapping training/testing sets when training the actual models.
-
--
+Optional: Create nonoverlapping training/testing sets when training the actual models.  You can use the [`Test_train_split...`](https://github.com/emcdona1/fmnh_scripts/blob/main/Test_train_split_an_image_set_with_metadata.ipynb) Notebook in `fmnh_scripts` to create these separate datasets.
 
 -----
 
