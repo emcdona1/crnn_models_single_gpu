@@ -16,7 +16,9 @@
 
 -----
 
-3. Start the hyperparameter tuning in the UI (Leave the workbench open so you can reference it):
+3. Start the hyperparameter tuning.
+
+OPTION ONE: Use the GCP UI (Leave the workbench open so you can reference it):
 
 - Back in the Vertex AI UI, navigate to Training, then click "Create."
 
@@ -38,3 +40,8 @@
     * Specify at least one machine (n1-standard-4 is plenty for IAM dataset).
     * Recommended to select an accelerator (GPU).  (Training on a Tesla-V100 GPU for 60 trials, 3 parallel, 15 epochs each, took ~30 hours and cost ~$250.)
 6. Click Start Training.
+
+
+OPTION TWO: Use the notebook `in-workbench-tuner.ipynb` to start the hyperparameter tuning job.
+
+- Confirm all parameters and specs before executing each cell.
