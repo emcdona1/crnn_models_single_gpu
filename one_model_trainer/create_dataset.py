@@ -5,10 +5,10 @@ from pathlib import Path, PureWindowsPath
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.keras import layers
-from trainer.trainer_config import TrainerConfiguration
+from trainer_config import TrainerConfiguration
 
 
-def create_dataset(batch_size: int):
+def create_dataset(batch_size: int, split_train_validation=True):
     c = TrainerConfiguration()
     header = None
     line_list = list()
@@ -30,38 +30,43 @@ def create_dataset(batch_size: int):
     labels = [metadata[metadata['word_image_basenames'] == b] for b in labels]
     labels = [b['transcription'].item() for b in labels]
     labels = [str(e).ljust(c.MAX_LABEL_LENGTH) for e in labels]
-
-    x_train, x_valid, y_train, y_valid = split_data(np.array(images), np.array(labels))
-
-    print(f'Training images ({x_train.shape[0]}) and labels ({y_train.shape[0]}) loaded.')
-    print(f'Validation images ({x_valid.shape[0]}) and labels ({y_valid.shape[0]}) loaded.')
-
-    # Factor by which the image is going to be downsampled
-    # by the convolutional blocks. We will be using two
-    # convolution blocks and each block will have
-    # a pooling layer which downsample the features by a factor of 2.
-    # Hence total downsampling factor would be 4.
-    downsample_factor = 4
     
-    train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-    train_dataset = (
-        train_dataset.map(
-            encode_single_sample, num_parallel_calls=tf.data.experimental.AUTOTUNE
-        )
-        .batch(batch_size)
-        .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-    )
+    if split_train_validation:
+        x_train, x_valid, y_train, y_valid = split_data(np.array(images), np.array(labels))
 
-    validation_dataset = tf.data.Dataset.from_tensor_slices((x_valid, y_valid))
-    validation_dataset = (
-        validation_dataset.map(
-            encode_single_sample, num_parallel_calls=tf.data.experimental.AUTOTUNE
+        print(f'Training images ({x_train.shape[0]}) and labels ({y_train.shape[0]}) loaded.')
+        print(f'Validation images ({x_valid.shape[0]}) and labels ({y_valid.shape[0]}) loaded.')
+        
+        train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
+        train_dataset = (
+            train_dataset.map(
+                encode_single_sample, num_parallel_calls=tf.data.experimental.AUTOTUNE
+            )
+            .batch(batch_size)
+            .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
         )
-        .batch(batch_size)
-        .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-    )
 
-    return train_dataset, validation_dataset
+        validation_dataset = tf.data.Dataset.from_tensor_slices((x_valid, y_valid))
+        validation_dataset = (
+            validation_dataset.map(
+                encode_single_sample, num_parallel_calls=tf.data.experimental.AUTOTUNE
+            )
+            .batch(batch_size)
+            .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+        )
+        return train_dataset, validation_dataset
+    else:
+        x_test = np.array(images)
+        y_test = np.array(labels)
+        test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
+        test_dataset = (
+            test_dataset.map(
+                encode_single_sample, num_parallel_calls=tf.data.experimental.AUTOTUNE
+            )
+            .batch(batch_size)
+            .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+        )
+        return test_dataset
 
 
 def encode_single_sample(img_path, label):
