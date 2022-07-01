@@ -6,9 +6,10 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.keras import layers
 from trainer_config import TrainerConfiguration
+from abc import ABC
 
 
-class HandwritingDataset:
+class HandwritingDataset(ABC):
     def __init__(self):
         self.c = TrainerConfiguration()
         self.folder = None
@@ -25,6 +26,7 @@ class HandwritingDataset:
             vocabulary=self.char_to_num.get_vocabulary(), mask_token=None, invert=True
         )
     
+    @abstractmethod
     def create_dataset(self):
         pass
 

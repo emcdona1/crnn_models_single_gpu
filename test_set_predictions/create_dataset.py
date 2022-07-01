@@ -6,9 +6,10 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.keras import layers
 from trainer_config import TrainerConfiguration
+from abc import ABC
 
 
-class HandwritingDataset:
+class HandwritingDataset(ABC):
     def __init__(self):
         self.c = TrainerConfiguration()
         self.folder = None
@@ -25,6 +26,7 @@ class HandwritingDataset:
             vocabulary=self.char_to_num.get_vocabulary(), mask_token=None, invert=True
         )
     
+    @abstractmethod
     def create_dataset(self):
         pass
 
@@ -50,7 +52,7 @@ class HandwritingDataset:
         # 3. Convert to float32 in [0, 1] range
         img = tf.image.convert_image_dtype(img, tf.float32)
         # 4. Resize to the desired size
-        img = tf.image.resize(img, [self.c.IMG_HEIGHT, self.c.IMG_WIDTH])
+        img = tf.image.resize(img, [self.c.img_height, self.c.img_width])
         # 5. Transpose the image because we want the time
         # dimension to correspond to the width of the image.
         img = tf.transpose(img, perm=[1, 0, 2])
@@ -95,7 +97,7 @@ class TrainDataset(HandwritingDataset):
 
     def create_dataset(self, batch_size: int, image_folder: Path='', metadata_filename=''):
         self.folder = image_folder if image_folder else self.c.data_dir
-        self.metadata = metadata_filename if metadata_filename else self.c.METADATA_FILE_NAME
+        self.metadata = metadata_filename if metadata_filename else self.c.metadata_file_name
         self.metadata = pd.read_csv(Path(self.folder, self.metadata))
         self.metadata = self.metadata.drop(self.metadata.index[pd.isna(self.metadata['image_location'])])
         self.metadata['word_image_basenames'] = self.metadata['image_location'].apply(lambda f: os.path.basename(Path(f)))
@@ -131,7 +133,7 @@ class TestDataset(HandwritingDataset):
     
     def create_dataset(self, batch_size: int, image_folder: Path, metadata_filename=''):
         self.folder = image_folder if image_folder else self.c.data_dir
-        self.metadata = metadata_filename if metadata_filename else self.c.METADATA_FILE_NAME
+        self.metadata = metadata_filename if metadata_filename else self.c.metadata_file_name
         self.metadata = pd.read_csv(Path(self.folder, self.metadata))
         self.metadata = self.metadata.drop(self.metadata.index[pd.isna(self.metadata['image_location'])])
         self.metadata['word_image_basenames'] = self.metadata['image_location'].apply(lambda f: os.path.basename(Path(f)))
