@@ -1,3 +1,4 @@
+#tl
 import os
 import numpy as np
 import pandas as pd
@@ -93,7 +94,7 @@ class TrainDataset(HandwritingDataset):
         x_valid, y_valid = images[indices[train_samples:]], labels[indices[train_samples:]]
         return x_train, x_valid, y_train, y_valid
 
-    def create_dataset(self, batch_size: int, image_folder: Path, metadata_filename=''):
+    def create_dataset(self, batch_size: int, image_folder: Path='', metadata_filename=''):
         self.folder = image_folder if image_folder else self.c.data_dir
         self.metadata = metadata_filename if metadata_filename else self.c.metadata_file_name
         self.metadata = pd.read_csv(Path(self.folder, self.metadata))
