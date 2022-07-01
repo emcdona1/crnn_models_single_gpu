@@ -4,7 +4,7 @@ import tensorflow as tf
 import argparse
 import hypertune
 from trainer.create_model import create_model
-from trainer.create_dataset import create_dataset
+from trainer.create_dataset import TrainDataset
 from trainer.trainer_config import TrainerConfiguration
 
 
@@ -59,10 +59,11 @@ def main():
     c = TrainerConfiguration()
     tf.random.set_seed(c.SEED)
     args = get_args()
-    train_data, validation_data = create_dataset(args.batch_size)
+    dataset = TrainDataset()
+    dataset.create_dataset(args.batch_size)
     model = create_model(args.kernel_size, args.activation, args.num_units_dense1, args.dropout, 
                          args.num_units_lstm1, args.num_units_lstm2, args.learning_rate)
-    history = model.fit(train_data, epochs=c.NUM_EPOCHS, validation_data=validation_data)
+    history = model.fit(dataset.train_dataset, epochs=c.NUM_EPOCHS, validation_data=dataset.validation_dataset)
 
     # DEFINE METRIC
     tuning_metric = history.history['val_loss'][-1]
