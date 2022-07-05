@@ -6,7 +6,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.keras import layers
 from trainer_config import TrainerConfiguration
-from abc import ABC
+from abc import ABC, abstractmethod
 
 
 class HandwritingDataset(ABC):
