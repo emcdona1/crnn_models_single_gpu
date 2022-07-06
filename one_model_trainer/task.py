@@ -1,13 +1,17 @@
+import sys
 import os
+root_dir = os.path.join(os.getcwd(), '..')
+sys.path.append(root_dir)
+
 from pathlib import Path
 import argparse
 import tensorflow as tf
 import pandas as pd
 from tensorflow.keras import layers
-from trainer.create_dataset import TrainDataset
-# from trainer.create_dataset import create_dataset
-from trainer.create_model import create_model
-from trainer.trainer_config import TrainerConfiguration
+
+from utilities import create_model
+from utilities import TrainerConfiguration
+from utilities import TrainDataset
 c = TrainerConfiguration()
 tf.random.set_seed(c.SEED)
 
