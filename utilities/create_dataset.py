@@ -5,7 +5,7 @@ from pathlib import Path, PureWindowsPath
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.keras import layers
-from trainer_config import TrainerConfiguration
+from .trainer_config import TrainerConfiguration
 from abc import ABC, abstractmethod
 
 
@@ -52,7 +52,7 @@ class HandwritingDataset(ABC):
         # 3. Convert to float32 in [0, 1] range
         img = tf.image.convert_image_dtype(img, tf.float32)
         # 4. Resize to the desired size
-        img = tf.image.resize(img, [self.c.img_height, self.c.img_width])
+        img = tf.image.resize(img, [self.c.IMG_HEIGHT, self.c.IMG_WIDTH])
         # 5. Transpose the image because we want the time
         # dimension to correspond to the width of the image.
         img = tf.transpose(img, perm=[1, 0, 2])
@@ -74,7 +74,7 @@ class HandwritingDataset(ABC):
             output_text.append(res)
         return output_text
 
-    
+
 class TrainDataset(HandwritingDataset):
     def __init(self):
         super().__init__()
@@ -123,7 +123,7 @@ class TrainDataset(HandwritingDataset):
         
         self.train_dataset = self._encode_dataset(batch_size, x_train, y_train)
         self.validation_dataset = self._encode_dataset(batch_size, x_valid, y_valid)
-    
+
 
 class TestDataset(HandwritingDataset):
     def __init__(self):

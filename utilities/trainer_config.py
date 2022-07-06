@@ -40,8 +40,8 @@ class TrainerConfiguration(HandwritingConfiguration):
         self.PROJECT_FOLDER = ''  # only use if the Dockerfile is not in the same file directory level as IMAGE_SET_FOLDER
         self.IMAGE_SET_FOLDER = 'IAM_Words'
         self.data_dir = Path(self.PROJECT_FOLDER, self.IMAGE_SET_FOLDER)
-        
-        
+
+
 class TestConfiguration(HandwritingConfiguration):
     def __init__(self):
         super().__init__()

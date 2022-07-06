@@ -2,7 +2,7 @@ from pathlib import Path
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-      
+
 
 class CTCLayer(layers.Layer):
     def __init__(self, name=None):
