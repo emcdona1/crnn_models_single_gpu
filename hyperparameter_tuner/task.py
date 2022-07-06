@@ -1,11 +1,17 @@
+import sys
+import os
+root_dir = os.path.join(os.getcwd(), '..')
+sys.path.append(root_dir)
+
 from pathlib import Path
 from tensorflow.keras import layers
 import tensorflow as tf
 import argparse
 import hypertune
-from trainer.create_model import create_model
-from trainer.create_dataset import TrainDataset
-from trainer.trainer_config import TrainerConfiguration
+
+from utilities import create_model
+from utilities import TrainerConfiguration
+from utilities import TrainDataset
 
 
 def get_args():

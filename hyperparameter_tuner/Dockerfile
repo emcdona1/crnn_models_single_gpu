@@ -9,6 +9,7 @@ WORKDIR /
 RUN pip install cloudml-hypertune
 
 # Copies the trainer code to the docker image.
+COPY utilities /utilities
 COPY hyperparameter_tuner /trainer
 COPY IAM_Words /IAM_Words
 # COPY IAM_Words_train /IAM_Words
