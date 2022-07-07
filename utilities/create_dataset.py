@@ -143,11 +143,12 @@ class TestDataset(HandwritingDataset):
         images.extend(self.folder.rglob('*.jpg'))
         images = sorted(list(map(str, images)))
         print(len(images))
-        self.train_size = len(images)
-        
+        self.size = len(images)
+
         labels = list()
         labels = [os.path.basename(l) for l in images]
         labels = [self.metadata[self.metadata['word_image_basenames'] == b] for b in labels]
+
         labels = [b['transcription'].item() for b in labels]
         labels = [str(e).ljust(self.c.MAX_LABEL_LENGTH) for e in labels]
 
