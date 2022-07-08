@@ -25,7 +25,7 @@ LEARNING_RATE=0.001
 NUM_UNITS_DENSE=256
 NUM_UNITS_LTSM2=1024
 ###################################################################
-NAME = 'dummy'  # change the name
+NAME = 'run_55'  # change the name
 ### run 55 parameters
 DROPOUT=0.12489316869910207
 NUM_UNITS_LTSM1=512
@@ -101,8 +101,8 @@ def main():
     history_filename = f'{NAME}-training_history.csv'
     training_history.to_csv(Path(results_folder, history_filename))
 
-    # training_model_name = f'{NAME}-trained'
-    # model.save(Path(results_folder, f'{training_model_name}.h5'))
+    training_model_name = f'{NAME}-full_model'
+    model.save(Path(results_folder, f'{training_model_name}.h5'))
 
     # create and save prediction model
     prediction_model = tf.keras.models.Model(
