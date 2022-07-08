@@ -4,3 +4,4 @@
 *images*
 *.model
 test_set_predictions/*/
+transfer_learning/*/
