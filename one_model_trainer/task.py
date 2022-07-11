@@ -34,6 +34,7 @@ NUM_UNITS_LTSM1=512
 # NUM_UNITS_LTSM1=768
 ###################################################################
 
+
 def get_args(manual_args=None):
     '''Parses args. Must include all hyperparameters you want to specify.'''
     parser = argparse.ArgumentParser()
@@ -90,8 +91,6 @@ def main():
     model = create_model(args.kernel_size, args.activation, args.num_units_dense1, args.dropout, 
                      args.num_units_ltsm1, args.num_units_ltsm2, args.learning_rate)
     history = model.fit(dataset.train_dataset, epochs=c.NUM_EPOCHS, validation_data=dataset.validation_dataset)
-
-
 
     results_folder = Path(os.getenv("AIP_MODEL_DIR"))
     if not os.path.exists(results_folder):
