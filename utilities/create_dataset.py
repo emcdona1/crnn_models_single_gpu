@@ -97,7 +97,7 @@ class TrainDataset(HandwritingDataset):
 
     def create_dataset(self, batch_size: int, image_folder: Path='', metadata_filename=''):
         self.folder = image_folder if image_folder else self.c.data_dir
-        self.metadata = metadata_filename if metadata_filename else self.c.metadata_file_name
+        self.metadata = metadata_filename if metadata_filename else self.c.METADATA_FILE_NAME
         self.metadata = pd.read_csv(Path(self.folder, self.metadata))
         self.metadata = self.metadata.drop(self.metadata.index[pd.isna(self.metadata['image_location'])])
         self.metadata['word_image_basenames'] = self.metadata['image_location'].apply(lambda f: os.path.basename(Path(f)))
@@ -133,7 +133,7 @@ class TestDataset(HandwritingDataset):
     
     def create_dataset(self, batch_size: int, image_folder: Path, metadata_filename=''):
         self.folder = image_folder if image_folder else self.c.data_dir
-        self.metadata = metadata_filename if metadata_filename else self.c.metadata_file_name
+        self.metadata = metadata_filename if metadata_filename else self.c.METADATA_FILE_NAME
         self.metadata = pd.read_csv(Path(self.folder, self.metadata))
         self.metadata = self.metadata.drop(self.metadata.index[pd.isna(self.metadata['image_location'])])
         self.metadata['word_image_basenames'] = self.metadata['image_location'].apply(lambda f: os.path.basename(Path(f)))
