@@ -1,13 +1,15 @@
+import os
+from abc import ABC
+import configparser
 from pathlib import Path
 from tensorflow.keras import layers
-import configparser
-from abc import ABC
 
 
 class HandwritingConfiguration(ABC):
     def __init__(self):
         config = configparser.ConfigParser()
-        config.read(Path('..', 'setup.cfg'))
+        if not config.read('setup.cfg'):
+            print('WARNING: No configuration file loaded.')
         self.IMAGE_SET_NAME = config['test']['TEST_IMAGE_SET_NAME']
         self.METADATA_FILE_NAME = config['test']['TEST_METADATA_FILE_NAME']
         self.IMAGE_FORMAT = config['project']['IMAGE_FORMAT']
