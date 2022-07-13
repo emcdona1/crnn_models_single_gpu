@@ -101,7 +101,9 @@ def main():
     training_history.to_csv(Path(results_folder, history_filename))
 
     training_model_name = f'{NAME}-full_model'
-    model.save(Path(results_folder, f'{training_model_name}.h5'))
+    save_location = Path(results_folder, f'{training_model_name}.h5')
+    model.save(save_location)
+    print(f'Training model saved to: {save_location}')
 
     # create and save prediction model
     prediction_model = tf.keras.models.Model(
@@ -109,7 +111,9 @@ def main():
     )
     prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE))
     prediction_model_name = f'{NAME}-prediction'
-    prediction_model.save(Path(results_folder, f'{prediction_model_name}.h5'))
+    save_location = Path(results_folder, f'{prediction_model_name}.h5')
+    prediction_model.save(save_location)
+    print(f'Prediction model saved to: {save_location}')
 
     
 if __name__ == '__main__':
