@@ -8,7 +8,7 @@ from tensorflow.keras import layers
 class HandwritingConfiguration(ABC):
     def __init__(self):
         config = configparser.ConfigParser()
-        if not config.read('setup.cfg'):
+        if not config.read('../setup.cfg'):
             print('WARNING: No configuration file loaded.')
         self.IMAGE_SET_NAME = config['test']['TEST_IMAGE_SET_NAME']
         self.METADATA_FILE_NAME = config['test']['TEST_METADATA_FILE_NAME']
