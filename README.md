@@ -2,7 +2,7 @@
 
 The code in this repository has been used to perform hyperparameter tuning, model training, and (not yet) model deployment within Google Cloud's infrastructure.
 
-This code is built on Python 3.7.12.
+This code is built on Python 3.7.13.
 
 ## Google Cloud Platform account requirements
 * Billable Google Cloud account (hyperparameter tuning, especially, is expensive)
