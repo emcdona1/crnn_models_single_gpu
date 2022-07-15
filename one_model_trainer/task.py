@@ -7,7 +7,6 @@ from pathlib import Path
 import argparse
 import tensorflow as tf
 import pandas as pd
-from tensorflow.keras import layers
 
 from utilities import create_model
 from utilities import TrainerConfiguration
@@ -18,20 +17,20 @@ tf.random.set_seed(c.SEED)
 
 ###################################################################
 # SET ALL THE HYPERPARAMETERS HERE, WHICH WERE DETERMINED IN TUNING
-BATCH_SIZE=128
-KERNEL_SIZE=4
-ACTIVATION_FUNCTION='relu'
-LEARNING_RATE=0.001
-NUM_UNITS_DENSE=256
-NUM_UNITS_LTSM2=1024
+BATCH_SIZE = 128
+KERNEL_SIZE = 4
+ACTIVATION_FUNCTION = 'relu'
+LEARNING_RATE = 0.001
+NUM_UNITS_DENSE = 256
+NUM_UNITS_LTSM2 = 1024
 ###################################################################
 NAME = 'run_55'  # change the name
-### run 55 parameters
-DROPOUT=0.12489316869910207
-NUM_UNITS_LTSM1=512
-### run 41 parameters
-# DROPOUT=0.1
-# NUM_UNITS_LTSM1=768
+# run 55 parameters
+DROPOUT = 0.12489316869910207
+NUM_UNITS_LTSM1 = 512
+# run 41 parameters
+# DROPOUT = 0.1
+# NUM_UNITS_LTSM1 = 768
 ###################################################################
 
 
