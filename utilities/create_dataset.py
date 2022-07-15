@@ -27,7 +27,7 @@ class HandwritingDataset(ABC):
         )
     
     @abstractmethod
-    def create_dataset(self):
+    def create_dataset(self, batch_size: int, image_folder: Path, metadata_filename=''):
         pass
 
     def _encode_dataset(self, batch_size, images, labels) -> tf.data.Dataset:
