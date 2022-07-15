@@ -1,7 +1,7 @@
 import sys
 import os
-root_dir = os.path.join(os.getcwd(), '..')
-sys.path.append(root_dir)
+working_dir = os.path.join(os.getcwd())
+sys.path.append(working_dir)
 
 from pathlib import Path
 import argparse
