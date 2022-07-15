@@ -5,7 +5,7 @@ from pathlib import Path, PureWindowsPath
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.keras import layers
-from .trainer_config import TrainerConfiguration
+from .config_loader import TrainerConfiguration
 from abc import ABC, abstractmethod
 
 
