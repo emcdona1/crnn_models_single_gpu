@@ -33,14 +33,9 @@ class HandwritingConfiguration(ABC):
 class TrainerConfiguration(HandwritingConfiguration):
     def __init__(self):
         super().__init__()
-
-        self.NUM_EPOCHS = 75
-        self.SEED = 2
-        self.EARLY_STOPPING = True
-        # Desired image dimensions
-        self.PROJECT_FOLDER = ''  # only use if the Dockerfile is not in the same file directory level as IMAGE_SET_FOLDER
-        self.IMAGE_SET_FOLDER = 'IAM_Words'
-        self.data_dir = Path(self.PROJECT_FOLDER, self.IMAGE_SET_FOLDER)
+        self.NUM_EPOCHS = self.config.getint('train', 'NUM_EPOCHS')
+        self.SEED = self.config.getint('train', 'SEED')
+        self.EARLY_STOPPING = self.config.getboolean('train', 'EARLY_STOPPING')
 
 
 class TestConfiguration(HandwritingConfiguration):
