@@ -5,3 +5,4 @@
 *.model
 test_set_predictions/*/
 transfer_learning/*/
+/image_sets/
