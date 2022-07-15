@@ -96,7 +96,7 @@ class TrainDataset(HandwritingDataset):
         return x_train, x_valid, y_train, y_valid
 
     def create_dataset(self, batch_size: int, image_folder: Path='', metadata_filename=''):
-        self.folder = image_folder if image_folder else self.c.data_dir
+        self.folder = image_folder if image_folder else self.c.IMAGE_SET_LOCATION
         self.metadata = metadata_filename if metadata_filename else self.c.METADATA_FILE_NAME
         self.metadata = pd.read_csv(Path(self.folder, self.metadata))
         self.metadata = self.metadata.drop(self.metadata.index[pd.isna(self.metadata['image_location'])])
