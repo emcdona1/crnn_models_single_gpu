@@ -7,3 +7,4 @@ asrtoolkit==0.2.4
 fuzzywuzzy==0.18.0
 python-Levenshtein==0.12.2
 nltk==3.7
+tensorboard==2.9.1
