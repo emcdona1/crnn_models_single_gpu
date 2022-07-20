@@ -13,71 +13,73 @@ from utilities import TrainerConfiguration
 from utilities import TrainDataset
 
 
-def get_args():
-    '''Parses args. Must include all hyperparameters you want to tune.'''
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-      '--batch_size',
-      required=True,
-      type=int,
-      help='batch size')
-    parser.add_argument(
-      '--kernel_size',
-      required=True,
-      type=int,
-      help='size of kernel to use in convolutional layers (nxn square)')
-    parser.add_argument(
-      '--activation',
-      required=True,
-      type=str,
-      help='activation function to use')
-    parser.add_argument(
-      '--dropout',
-      required=True,
-      type=float,
-      help='amount of dropout in dropout layer')
-    parser.add_argument(
-      '--num_units_dense1',
-      required=True,
-      type=int,
-      help='number of units in 1st dense layer')
-    parser.add_argument(
-      '--num_units_lstm1',
-      required=True,
-      type=int,
-      help='number of units in 1st LSTM bidirectional layer')
-    parser.add_argument(
-      '--num_units_lstm2',
-      required=True,
-      type=int,
-      help='number of units in 2nd LSTM bidirectional layer')
-    parser.add_argument(
-      '--learning_rate',
-      required=True,
-      type=float,
-      help='learning rate')
-    args = parser.parse_args()
-    return args
+def train_test_model(hparams: dict, dataset: TrainDataset):
+    model = create_model(hparams['kernel_size'], hparams['activation_function'],
+                         hparams['num_dense_units1'], hparams['dropout'],
+                         hparams['num_dense_ltsm1'], hparams['num_dense_ltsm2'],hparams['learning_rate'])
+    history = model.fit(dataset.train_dataset, validation_data=dataset.validation_dataset,
+                        epochs=10)  # todo: change to epochs=c.NUM_EPOCHS after testing
+    # _, accuracy = model.evaluate(dataset.train_dataset, dataset.validation_dataset)
+    # return accuracy
+    tuning_metric = history.history['val_loss'][-1]
+    return tuning_metric
+
+
+def run(run_dir, hparams: dict, dataset: TrainDataset, METRIC_VAL_LOSS: str):
+    with tf.summary.create_file_writer(run_dir).as_default():
+        hp.hparams(hparams)  # record the values used in this trial
+        val_loss = train_test_model(hparams, dataset)
+        tf.summary.scalar(METRIC_VAL_LOSS, val_loss, step=1)
 
 
 def main():
-    c = TrainerConfiguration()
-    tf.random.set_seed(c.SEED)
-    args = get_args()
     dataset = TrainDataset()
-    dataset.create_dataset(args.batch_size)
-    model = create_model(args.kernel_size, args.activation, args.num_units_dense1, args.dropout, 
-                         args.num_units_lstm1, args.num_units_lstm2, args.learning_rate)
-    history = model.fit(dataset.train_dataset, epochs=c.NUM_EPOCHS, validation_data=dataset.validation_dataset)
+    dataset.create_dataset(32)
 
-    # DEFINE METRIC
-    tuning_metric = history.history['val_loss'][-1]
+    HP_BATCH_SIZE = hp.HParam('batch_size', hp.Discrete([16, 32, 64, 128]))
+    HP_KERNEL_SIZE = hp.HParam('kernel_size', hp.Discrete([2, 3, 4]))
+    HP_ACTIVATION = hp.HParam('activation_function', hp.Discrete(['relu', 'sigmoid', 'tanh']))
+    HP_DROPOUT = hp.HParam('dropout', hp.RealInterval(min_value=0.1, max_value=0.5))
+    HP_NUM_DENSE_UNITS1 = hp.HParam('num_dense_units1', hp.Discrete([64, 128, 256]))
+    HP_NUM_DENSE_LTSM1 = hp.HParam('num_dense_ltsm1', hp.Discrete([128, 256, 512, 768, 1024]))
+    HP_NUM_DENSE_LTSM2 = hp.HParam('num_dense_ltsm2', hp.Discrete([128, 256, 512, 768, 1024]))
+    HP_LEARNING_RATE = hp.HParam('learning_rate', hp.RealInterval(min_value=0.0005, max_value=0.1))
+    METRIC_LOSS = 'loss'
+    METRIC_VAL_LOSS = 'val_loss'
 
-    hpt = hypertune.HyperTune()
-    hpt.report_hyperparameter_tuning_metric(
-        hyperparameter_metric_tag='val_loss',
-        metric_value=tuning_metric,
-        global_step=c.NUM_EPOCHS)
+    with tf.summary.create_file_writer('logs/hparam_tuning').as_default():
+        hp.hparams_config(
+            hparams=[HP_BATCH_SIZE, HP_KERNEL_SIZE, HP_ACTIVATION, HP_DROPOUT,
+                     HP_NUM_DENSE_UNITS1, HP_NUM_DENSE_LTSM1, HP_NUM_DENSE_LTSM2, HP_LEARNING_RATE],
+            metrics=[hp.Metric(METRIC_LOSS, display_name='Loss'),
+                     hp.Metric(METRIC_VAL_LOSS, display_name='Validation Loss')],
+        )
+
+    session_num = 0
+    for batch in HP_BATCH_SIZE.domain.values:
+        for kernel in HP_KERNEL_SIZE.domain.values:
+            for activation in HP_ACTIVATION.domain.values:
+                for dropout in (HP_DROPOUT.domain.min_value, HP_DROPOUT.domain.max_value):
+                    for dense_1 in HP_NUM_DENSE_UNITS1.domain.values:
+                        for ltsm_1 in HP_NUM_DENSE_LTSM1.domain.values:
+                            for ltsm_2 in HP_NUM_DENSE_LTSM2.domain.values:
+                                for lr in HP_LEARNING_RATE.domain.values:
+                                    dataset.update_batch_size(batch)
+                                    hparams = {
+                                        HP_BATCH_SIZE: batch,
+                                        HP_KERNEL_SIZE: kernel,
+                                        HP_ACTIVATION: activation,
+                                        HP_DROPOUT: dropout,
+                                        HP_NUM_DENSE_UNITS1: dense_1,
+                                        HP_NUM_DENSE_LTSM1: ltsm_1,
+                                        HP_NUM_DENSE_LTSM2: ltsm_2,
+                                        HP_LEARNING_RATE: lr
+                                    }
+                                    run_name = f'run-{session_num}'
+                                    print(f'--- Starting trial: {run_name}')
+                                    print({h.name: hparams[h] for h in hparams})
+                                    run('logs/hparam_tuning/' + run_name, hparams, dataset, METRIC_VAL_LOSS)
+                                    session_num += 1
 
 
 if __name__ == "__main__":
