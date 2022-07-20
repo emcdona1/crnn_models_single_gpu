@@ -1,5 +1,6 @@
 import sys
 import os
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # suppress INFO
 working_dir = os.path.join(os.getcwd())
 sys.path.append(working_dir)
 
