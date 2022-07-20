@@ -1,13 +1,12 @@
 import sys
 import os
-root_dir = os.path.join(os.getcwd(), '..')
-sys.path.append(root_dir)
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # suppress INFO
+working_dir = os.path.join(os.getcwd())
+sys.path.append(working_dir)
 
-from pathlib import Path
-from tensorflow.keras import layers
 import tensorflow as tf
 import argparse
-import hypertune
+from tensorboard.plugins.hparams import api as hp
 
 from utilities import create_model
 from utilities import TrainerConfiguration
