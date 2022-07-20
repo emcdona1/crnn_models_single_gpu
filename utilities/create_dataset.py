@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.keras import layers
@@ -65,8 +65,8 @@ class HandwritingDataset(ABC):
         input_len = np.ones(pred.shape[0]) * pred.shape[1]
         # Use greedy search. For complex tasks, you can use beam search
         results = tf.keras.backend.ctc_decode(pred, input_length=input_len, greedy=True)[0][0][
-            :, :self.c.MAX_LABEL_LENGTH
-        ]
+                  :, :self.c.MAX_LABEL_LENGTH
+                  ]
         # Iterate over the results and get back the text
         output_text = []
         for res in results:
@@ -76,11 +76,17 @@ class HandwritingDataset(ABC):
 
 
 class TrainDataset(HandwritingDataset):
-    def __init(self):
+    def __init__(self):
         super().__init__()
         self.train_dataset = None
         self.validation_dataset = None
-    
+        self.images_train = None
+        self.images_valid = None
+        self.labels_train = None
+        self.labels_valid = None
+        self.train_size = 0
+        self.validation_size = 0
+
     def _split_data(self, images, labels, train_size=0.9, shuffle=True):
         # 1. Get the total size of the dataset
         size = len(images)
@@ -95,12 +101,13 @@ class TrainDataset(HandwritingDataset):
         x_valid, y_valid = images[indices[train_samples:]], labels[indices[train_samples:]]
         return x_train, x_valid, y_train, y_valid
 
-    def create_dataset(self, batch_size: int, image_folder: Path='', metadata_filename=''):
+    def create_dataset(self, batch_size: int, image_folder: Path = '', metadata_filename=''):
         self.folder = image_folder if image_folder else self.c.IMAGE_SET_LOCATION
         self.metadata = metadata_filename if metadata_filename else self.c.METADATA_FILE_NAME
         self.metadata = pd.read_csv(Path(self.folder, self.metadata))
         self.metadata = self.metadata.drop(self.metadata.index[pd.isna(self.metadata['image_location'])])
-        self.metadata['word_image_basenames'] = self.metadata['image_location'].apply(lambda f: os.path.basename(Path(f)))
+        self.metadata['word_image_basenames'] = self.metadata['image_location'].apply(
+            lambda f: os.path.basename(Path(f)))
 
         images = list()
         images.extend(self.folder.rglob('*.png'))
@@ -108,21 +115,25 @@ class TrainDataset(HandwritingDataset):
         images = sorted(list(map(str, images)))
         print(len(images))
 
-        labels = list()
         labels = [os.path.basename(l) for l in images]
         labels = [self.metadata[self.metadata['word_image_basenames'] == b] for b in labels]
         labels = [b['transcription'].item() for b in labels]
         labels = [str(e).ljust(self.c.MAX_LABEL_LENGTH) for e in labels]
 
-        x_train, x_valid, y_train, y_valid = self._split_data(np.array(images), np.array(labels))
+        self.images_train, self.images_valid, self.labels_train, self.labels_valid = self._split_data(np.array(images),
+                                                                                                      np.array(labels))
 
-        print(f'Training images ({x_train.shape[0]}) and labels ({y_train.shape[0]}) loaded.')
-        print(f'Validation images ({x_valid.shape[0]}) and labels ({y_valid.shape[0]}) loaded.')
-        self.train_size = x_train.shape[0]
-        self.validation_size = x_valid.shape[0]
-        
-        self.train_dataset = self._encode_dataset(batch_size, x_train, y_train)
-        self.validation_dataset = self._encode_dataset(batch_size, x_valid, y_valid)
+        print(f'Training images ({self.images_train.shape[0]}) and labels ({self.labels_train.shape[0]}) loaded.')
+        print(f'Validation images ({self.images_valid.shape[0]}) and labels ({self.labels_valid.shape[0]}) loaded.')
+        self.train_size = self.images_train.shape[0]
+        self.validation_size = self.images_valid.shape[0]
+
+        self.train_dataset = self._encode_dataset(batch_size, self.images_train, self.labels_train)
+        self.validation_dataset = self._encode_dataset(batch_size, self.images_valid, self.labels_valid)
+
+    def update_batch_size(self, batch_size: int):
+        self.train_dataset = self._encode_dataset(batch_size, self.images_train, self.labels_train)
+        self.validation_dataset = self._encode_dataset(batch_size, self.images_valid, self.labels_valid)
 
 
 class TestDataset(HandwritingDataset):
@@ -132,26 +143,25 @@ class TestDataset(HandwritingDataset):
         self.size = None    
     
     def create_dataset(self, batch_size: int, image_folder: Path, metadata_filename=''):
-        self.folder = image_folder if image_folder else self.c.data_dir
+        self.folder = image_folder if image_folder else self.c.IMAGE_SET_LOCATION
         self.metadata = metadata_filename if metadata_filename else self.c.METADATA_FILE_NAME
         self.metadata = pd.read_csv(Path(self.folder, self.metadata))
         self.metadata = self.metadata.drop(self.metadata.index[pd.isna(self.metadata['image_location'])])
-        self.metadata['word_image_basenames'] = self.metadata['image_location'].apply(lambda f: os.path.basename(Path(f)))
+        self.metadata['word_image_basenames'] = self.metadata['image_location'].apply(
+            lambda f: os.path.basename(Path(f)))
 
         images = list()
         images.extend(self.folder.rglob('*.png'))
         images.extend(self.folder.rglob('*.jpg'))
         images = sorted(list(map(str, images)))
         print(len(images))
-        self.size = len(images)
 
-        labels = list()
         labels = [os.path.basename(l) for l in images]
         labels = [self.metadata[self.metadata['word_image_basenames'] == b] for b in labels]
-
         labels = [b['transcription'].item() for b in labels]
         labels = [str(e).ljust(self.c.MAX_LABEL_LENGTH) for e in labels]
 
+        self.size = len(images)
         x_test = np.array(images)
         y_test = np.array(labels)
         self.test_dataset = self._encode_dataset(batch_size, x_test, y_test)
