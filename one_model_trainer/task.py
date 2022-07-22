@@ -18,25 +18,6 @@ c = TrainerConfiguration('./setup.cfg')
 tf.random.set_seed(c.SEED)
 
 
-###################################################################
-# SET ALL THE HYPERPARAMETERS HERE, WHICH WERE DETERMINED IN TUNING
-BATCH_SIZE = 128
-KERNEL_SIZE = 4
-ACTIVATION_FUNCTION = 'relu'
-LEARNING_RATE = 0.001
-NUM_UNITS_DENSE = 256
-NUM_UNITS_LTSM2 = 1024
-###################################################################
-NAME = 'run_55'  # change the name
-# run 55 parameters
-DROPOUT = 0.12489316869910207
-NUM_UNITS_LTSM1 = 512
-# run 41 parameters
-# DROPOUT = 0.1
-# NUM_UNITS_LTSM1 = 768
-###################################################################
-
-
 def get_args(manual_args=None):
     """Parses args. Must include all hyperparameters you want to specify."""
     parser = argparse.ArgumentParser()
@@ -89,22 +70,40 @@ def main():
     config_location = Path(sys.argv[1])
     dataset = TrainDataset(config_location)
 
+    ###################################################################
+    # SET ALL THE HYPERPARAMETERS HERE, WHICH WERE DETERMINED IN TUNING
+    BATCH_SIZE = 128
+    KERNEL_SIZE = 4
+    ACTIVATION_FUNCTION = 'relu'
+    LEARNING_RATE = 0.001
+    NUM_UNITS_DENSE = 256
+    NUM_UNITS_LTSM2 = 1024
+    ###################################################################
+    NAME = 'run_55'  # change the name
+    # run 55 parameters
+    DROPOUT = 0.12489316869910207
+    NUM_UNITS_LTSM1 = 512
+    # run 41 parameters
+    # DROPOUT = 0.1
+    # NUM_UNITS_LTSM1 = 768
+    ###################################################################
+
     manual_args = [f'--batch_size={BATCH_SIZE}', f'--kernel_size={KERNEL_SIZE}', f'--activation={ACTIVATION_FUNCTION}',
                    f'--dropout={DROPOUT}', f'--num_units_dense1={NUM_UNITS_DENSE}',
                    f'--num_units_ltsm1={NUM_UNITS_LTSM1}', f'--num_units_ltsm2={NUM_UNITS_LTSM2}',
                    f'--learning_rate={LEARNING_RATE}']
     args = get_args(manual_args)
-    dataset = TrainDataset()
+
     dataset.create_dataset(args.batch_size)
     model = create_model(args.kernel_size, args.activation, args.num_units_dense1, args.dropout,
                          args.num_units_ltsm1, args.num_units_ltsm2, args.learning_rate)
     history = model.fit(dataset.train_dataset, epochs=c.NUM_EPOCHS, validation_data=dataset.validation_dataset)
 
-    results_folder = Path(os.getenv("AIP_MODEL_DIR"))
+    results_folder = Path('saved_models')
     if not os.path.exists(results_folder):
         os.makedirs(results_folder)
 
-    training_history = pd.DataFrame(model.history.history)
+    training_history = pd.DataFrame(history.history)
     history_filename = f'{NAME}-training_history.csv'
     training_history.to_csv(Path(results_folder, history_filename))
 
