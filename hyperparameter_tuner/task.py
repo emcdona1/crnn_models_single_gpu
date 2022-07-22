@@ -31,7 +31,9 @@ def run(run_dir, hparams: dict, dataset: TrainDataset):
 
 
 def main():
-    dataset = TrainDataset()
+    assert len(sys.argv) >= 2, 'Please specify a config file.'
+    config_location = Path(sys.argv[1])
+    dataset = TrainDataset(config_location)
     dataset.create_dataset(32)
 
     with tf.summary.create_file_writer('logs/hparam_tuning').as_default():

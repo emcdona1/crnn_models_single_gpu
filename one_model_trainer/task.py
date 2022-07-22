@@ -1,5 +1,6 @@
 import sys
 import os
+
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # suppress INFO
 working_dir = os.path.join(os.getcwd())
 sys.path.append(working_dir)
@@ -12,7 +13,8 @@ import pandas as pd
 from utilities import create_model
 from utilities import TrainerConfiguration
 from utilities import TrainDataset
-c = TrainerConfiguration()
+
+c = TrainerConfiguration('./setup.cfg')
 tf.random.set_seed(c.SEED)
 
 
@@ -83,8 +85,14 @@ def get_args(manual_args=None):
 
 
 def main():
-    manual_args = [f'--batch_size={BATCH_SIZE}', f'--kernel_size={KERNEL_SIZE}', f'--activation={ACTIVATION_FUNCTION}', f'--dropout={DROPOUT}',
-            f'--num_units_dense1={NUM_UNITS_DENSE}', f'--num_units_ltsm1={NUM_UNITS_LTSM1}', f'--num_units_ltsm2={NUM_UNITS_LTSM2}', f'--learning_rate={LEARNING_RATE}']
+    assert len(sys.argv) >= 2, 'Please specify a config file.'
+    config_location = Path(sys.argv[1])
+    dataset = TrainDataset(config_location)
+
+    manual_args = [f'--batch_size={BATCH_SIZE}', f'--kernel_size={KERNEL_SIZE}', f'--activation={ACTIVATION_FUNCTION}',
+                   f'--dropout={DROPOUT}', f'--num_units_dense1={NUM_UNITS_DENSE}',
+                   f'--num_units_ltsm1={NUM_UNITS_LTSM1}', f'--num_units_ltsm2={NUM_UNITS_LTSM2}',
+                   f'--learning_rate={LEARNING_RATE}']
     args = get_args(manual_args)
     dataset = TrainDataset()
     dataset.create_dataset(args.batch_size)

@@ -10,8 +10,11 @@ from abc import ABC, abstractmethod
 
 
 class HandwritingDataset(ABC):
-    def __init__(self):
-        self.c = TrainerConfiguration()
+    def __init__(self, configuration: Union[Path, str, TrainerConfiguration]):
+        if type(configuration) is TrainerConfiguration:
+            self.c = configuration
+        else:
+            self.c = TrainerConfiguration(configuration)
         self.folder = None
         self.metadata = None
         self.CHAR_LIST: str = '\' !"#&()[]*+,-./0123456789:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
@@ -76,8 +79,8 @@ class HandwritingDataset(ABC):
 
 
 class TrainDataset(HandwritingDataset):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, configuration: Union[Path, str, TrainerConfiguration]):
+        super().__init__(configuration)
         self.train_dataset = None
         self.validation_dataset = None
         self.images_train = None
@@ -137,8 +140,8 @@ class TrainDataset(HandwritingDataset):
 
 
 class TestDataset(HandwritingDataset):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, configuration: Union[Path, str, TrainerConfiguration]):
+        super().__init__(configuration)
         self.test_dataset = None
         self.size = None    
     
