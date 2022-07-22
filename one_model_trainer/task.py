@@ -38,48 +38,48 @@ NUM_UNITS_LTSM1 = 512
 
 
 def get_args(manual_args=None):
-    '''Parses args. Must include all hyperparameters you want to specify.'''
+    """Parses args. Must include all hyperparameters you want to specify."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
-      '--batch_size',
-      required=True,
-      type=int,
-      help='batch size')
+        '--batch_size',
+        required=True,
+        type=int,
+        help='batch size')
     parser.add_argument(
-      '--kernel_size',
-      required=True,
-      type=int,
-      help='size of kernel to use in convolutional layers (nxn square)')
+        '--kernel_size',
+        required=True,
+        type=int,
+        help='size of kernel to use in convolutional layers (nxn square)')
     parser.add_argument(
-      '--activation',
-      required=True,
-      type=str,
-      help='activation function to use')
+        '--activation',
+        required=True,
+        type=str,
+        help='activation function to use')
     parser.add_argument(
-      '--dropout',
-      required=True,
-      type=float,
-      help='amount of dropout in dropout layer')
+        '--dropout',
+        required=True,
+        type=float,
+        help='amount of dropout in dropout layer')
     parser.add_argument(
-      '--num_units_dense1',
-      required=True,
-      type=int,
-      help='number of units in 1st dense layer')
+        '--num_units_dense1',
+        required=True,
+        type=int,
+        help='number of units in 1st dense layer')
     parser.add_argument(
-      '--num_units_ltsm1',
-      required=True,
-      type=int,
-      help='number of units in 1st LTSM bidirectional layer')
+        '--num_units_ltsm1',
+        required=True,
+        type=int,
+        help='number of units in 1st LTSM bidirectional layer')
     parser.add_argument(
-      '--num_units_ltsm2',
-      required=True,
-      type=int,
-      help='number of units in 2nd LTSM bidirectional layer')
+        '--num_units_ltsm2',
+        required=True,
+        type=int,
+        help='number of units in 2nd LTSM bidirectional layer')
     parser.add_argument(
-      '--learning_rate',
-      required=True,
-      type=float,
-      help='learning rate')
+        '--learning_rate',
+        required=True,
+        type=float,
+        help='learning rate')
     args = parser.parse_args() if not manual_args else parser.parse_args(manual_args)
     return args
 
@@ -96,8 +96,8 @@ def main():
     args = get_args(manual_args)
     dataset = TrainDataset()
     dataset.create_dataset(args.batch_size)
-    model = create_model(args.kernel_size, args.activation, args.num_units_dense1, args.dropout, 
-                     args.num_units_ltsm1, args.num_units_ltsm2, args.learning_rate)
+    model = create_model(args.kernel_size, args.activation, args.num_units_dense1, args.dropout,
+                         args.num_units_ltsm1, args.num_units_ltsm2, args.learning_rate)
     history = model.fit(dataset.train_dataset, epochs=c.NUM_EPOCHS, validation_data=dataset.validation_dataset)
 
     results_folder = Path(os.getenv("AIP_MODEL_DIR"))

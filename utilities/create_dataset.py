@@ -2,9 +2,9 @@ import os
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from typing import Union
 import tensorflow as tf
-import tensorflow_datasets as tfds
-from tensorflow.keras import layers
+from tensorflow import keras
 from .config_loader import TrainerConfiguration
 from abc import ABC, abstractmethod
 
@@ -21,11 +21,11 @@ class HandwritingDataset(ABC):
         self.characters = sorted(set(list(self.CHAR_LIST)))
 
         # Mapping characters to integers
-        self.char_to_num = layers.experimental.preprocessing.StringLookup(
+        self.char_to_num = keras.layers.experimental.preprocessing.StringLookup(
             vocabulary=list(self.characters), mask_token=None
         )
         # Mapping integers back to original characters
-        self.num_to_char = layers.experimental.preprocessing.StringLookup(
+        self.num_to_char = keras.layers.experimental.preprocessing.StringLookup(
             vocabulary=self.char_to_num.get_vocabulary(), mask_token=None, invert=True
         )
     
