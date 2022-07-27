@@ -87,17 +87,15 @@ def train_ray(config, checkpoint_dir=None):
 
 
 def ray_hyperband_search():
-    scheduler = AsyncHyperBandScheduler(
-        time_attr='training_iteration', max_t=400, grace_period=20
-    )
+    scheduler = AsyncHyperBandScheduler(time_attr='training_iteration', max_t=400, grace_period=20)
     analysis = tune.run(
         train_ray,
         name='exp',  # todo: ??
         scheduler=scheduler,
         metric='validation_loss',
         mode='min',
-        stop={'training_iteration': 5},  # todo: increase this after testing  # 'mean_accuracy': 0.99
-        num_samples=10,
+        stop={'training_iteration': 5},  # todo: increase this after testing
+        num_samples=2,  # todo: increase this after testing
         resources_per_trial={'cpu': 1, 'gpu': 0},
         config={
             'threads': 2,
