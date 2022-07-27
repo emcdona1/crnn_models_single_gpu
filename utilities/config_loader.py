@@ -8,7 +8,7 @@ from typing import Union
 class HandwritingConfiguration(ABC):
     def __init__(self, config_file_location: Union[Path, str]):
         self.config = configparser.ConfigParser()
-        if not self.config.read(config_file_location):
+        if not self.config.read(Path(config_file_location).absolute()):
             raise FileNotFoundError(f'{config_file_location} does not exist or is not a configuration file.')
         self.image_format = self.config['project']['IMAGE_FORMAT']
         self.max_label_length = self.config.getint('project', 'MAX_LABEL_LENGTH')
@@ -31,7 +31,7 @@ class HandwritingConfiguration(ABC):
 class TrainerConfiguration(HandwritingConfiguration):
     def __init__(self, config_file_location: Union[Path, str]):
         super().__init__(config_file_location)
-        self.image_set_location = Path(self.config['train']['IMAGE_SET_NAME'])
+        self.image_set_location = Path(self.config['train']['IMAGE_SET_NAME']).absolute()
         self.metadata_file_name = self.config['train']['METADATA_FILE_NAME']
         self.metadata_image_column = self.config['train']['METADATA_IMAGE_COLUMN']
         self.metadata_transcription_column = self.config['train']['METADATA_TRANSCRIPTION_COLUMN']
