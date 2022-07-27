@@ -15,7 +15,7 @@ from utilities import TrainerConfiguration
 from utilities import TrainDataset
 
 c = TrainerConfiguration('./setup.cfg')
-tf.random.set_seed(c.SEED)
+tf.random.set_seed(c.seed)
 
 
 def get_args(manual_args=None):
@@ -97,7 +97,7 @@ def main():
     dataset.create_dataset(args.batch_size)
     model = create_model(args.kernel_size, args.activation, args.num_units_dense1, args.dropout,
                          args.num_units_ltsm1, args.num_units_ltsm2, args.learning_rate)
-    history = model.fit(dataset.train_dataset, epochs=c.NUM_EPOCHS, validation_data=dataset.validation_dataset)
+    history = model.fit(dataset.train_dataset, epochs=c.num_epochs, validation_data=dataset.validation_dataset)
 
     results_folder = Path('saved_models')
     if not os.path.exists(results_folder):

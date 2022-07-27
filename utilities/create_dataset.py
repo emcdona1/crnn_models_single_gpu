@@ -55,7 +55,7 @@ class HandwritingDataset(ABC):
         # 3. Convert to float32 in [0, 1] range
         img = tf.image.convert_image_dtype(img, tf.float32)
         # 4. Resize to the desired size
-        img = tf.image.resize(img, [self.c.IMG_HEIGHT, self.c.IMG_WIDTH])
+        img = tf.image.resize(img, [self.c.img_height, self.c.img_width])
         # 5. Transpose the image because we want the time
         # dimension to correspond to the width of the image.
         img = tf.transpose(img, perm=[1, 0, 2])
@@ -68,7 +68,7 @@ class HandwritingDataset(ABC):
         input_len = np.ones(pred.shape[0]) * pred.shape[1]
         # Use greedy search. For complex tasks, you can use beam search
         results = tf.keras.backend.ctc_decode(pred, input_length=input_len, greedy=True)[0][0][
-                  :, :self.c.MAX_LABEL_LENGTH
+                  :, :self.c.max_label_length
                   ]
         # Iterate over the results and get back the text
         output_text = []
@@ -105,12 +105,11 @@ class TrainDataset(HandwritingDataset):
         return x_train, x_valid, y_train, y_valid
 
     def create_dataset(self, batch_size: int, image_folder: Path = '', metadata_filename=''):
-        self.folder = image_folder if image_folder else self.c.IMAGE_SET_LOCATION
-        self.metadata = metadata_filename if metadata_filename else self.c.METADATA_FILE_NAME
+        self.folder = image_folder if image_folder else self.c.image_set_location
+        self.metadata = metadata_filename if metadata_filename else self.c.metadata_file_name
         self.metadata = pd.read_csv(Path(self.folder, self.metadata))
-        self.metadata = self.metadata.drop(self.metadata.index[pd.isna(self.metadata['image_location'])])
-        self.metadata['word_image_basenames'] = self.metadata['image_location'].apply(
-            lambda f: os.path.basename(Path(f)))
+        col = self.metadata[self.c.metadata_image_column]
+        self.metadata['word_image_basenames'] = col.apply(lambda f: os.path.basename(Path(f)))
 
         images = list()
         images.extend(self.folder.rglob('*.png'))
@@ -120,8 +119,37 @@ class TrainDataset(HandwritingDataset):
 
         labels = [os.path.basename(l) for l in images]
         labels = [self.metadata[self.metadata['word_image_basenames'] == b] for b in labels]
-        labels = [b['transcription'].item() for b in labels]
-        labels = [str(e).ljust(self.c.MAX_LABEL_LENGTH) for e in labels]
+        labels = [b[self.c.metadata_transcription_column].item() for b in labels]
+        labels = [str(e).ljust(self.c.max_label_length) for e in labels]
+
+        self.images_train, self.images_valid, self.labels_train, self.labels_valid = self._split_data(np.array(images),
+                                                                                                      np.array(labels))
+
+        print(f'Training images ({self.images_train.shape[0]}) and labels ({self.labels_train.shape[0]}) loaded.')
+        print(f'Validation images ({self.images_valid.shape[0]}) and labels ({self.labels_valid.shape[0]}) loaded.')
+        self.train_size = self.images_train.shape[0]
+        self.validation_size = self.images_valid.shape[0]
+
+        self.train_dataset = self._encode_dataset(batch_size, self.images_train, self.labels_train)
+        self.validation_dataset = self._encode_dataset(batch_size, self.images_valid, self.labels_valid)
+
+    def create_dataset_temp(self, batch_size: int, image_folder: Path = '', metadata_filename=''):
+        self.folder = image_folder if image_folder else self.c.image_set_location
+        self.metadata = metadata_filename if metadata_filename else self.c.metadata_file_name
+        self.metadata = pd.read_csv(Path(self.folder, self.metadata))
+        col = self.metadata[self.c.metadata_image_column]
+        self.metadata['word_image_basenames'] = col.apply(lambda f: os.path.basename(Path(f)))
+
+        images = list()
+        images.extend(self.folder.rglob('*.png'))
+        images.extend(self.folder.rglob('*.jpg'))
+        images = sorted(list(map(str, images)))
+        print(len(images))
+
+        labels = [os.path.basename(l) for l in images]
+        labels = [self.metadata[self.metadata['word_image_basenames'] == b] for b in labels]
+        labels = [b[self.c.metadata_transcription_column].item() for b in labels]
+        labels = [str(e).ljust(self.c.max_label_length) for e in labels]
 
         self.images_train, self.images_valid, self.labels_train, self.labels_valid = self._split_data(np.array(images),
                                                                                                       np.array(labels))
@@ -146,12 +174,13 @@ class TestDataset(HandwritingDataset):
         self.size = None    
     
     def create_dataset(self, batch_size: int, image_folder: Path, metadata_filename=''):
-        self.folder = image_folder if image_folder else self.c.IMAGE_SET_LOCATION
-        self.metadata = metadata_filename if metadata_filename else self.c.METADATA_FILE_NAME
+        self.folder = image_folder if image_folder else self.c.image_set_location
+        self.metadata = metadata_filename if metadata_filename else self.c.metadata_file_name
         self.metadata = pd.read_csv(Path(self.folder, self.metadata))
-        self.metadata = self.metadata.drop(self.metadata.index[pd.isna(self.metadata['image_location'])])
-        self.metadata['word_image_basenames'] = self.metadata['image_location'].apply(
-            lambda f: os.path.basename(Path(f)))
+        columns_to_drop = self.metadata.index[pd.isna(self.metadata[self.c.metadata_transcription_column])]
+        self.metadata = self.metadata.drop(columns_to_drop)
+        self.metadata['word_image_basenames'] = self.metadata[self.c.metadata_image_column].\
+            apply(lambda f: os.path.basename(Path(f)))
 
         images = list()
         images.extend(self.folder.rglob('*.png'))
@@ -161,8 +190,8 @@ class TestDataset(HandwritingDataset):
 
         labels = [os.path.basename(l) for l in images]
         labels = [self.metadata[self.metadata['word_image_basenames'] == b] for b in labels]
-        labels = [b['transcription'].item() for b in labels]
-        labels = [str(e).ljust(self.c.MAX_LABEL_LENGTH) for e in labels]
+        labels = [b[self.c.metadata_transcription_column].item() for b in labels]
+        labels = [str(e).ljust(self.c.max_label_length) for e in labels]
 
         self.size = len(images)
         x_test = np.array(images)

@@ -10,15 +10,12 @@ class HandwritingConfiguration(ABC):
         self.config = configparser.ConfigParser()
         if not self.config.read(config_file_location):
             raise FileNotFoundError(f'{config_file_location} does not exist or is not a configuration file.')
-        self.IMAGE_SET_LOCATION = Path(self.config['test']['TEST_IMAGE_SET_NAME'])
-        self.METADATA_FILE_NAME = self.config['test']['TEST_METADATA_FILE_NAME']
-        self.IMAGE_FORMAT = self.config['project']['IMAGE_FORMAT']
-        self.MAX_LABEL_LENGTH = self.config.getint('project', 'MAX_LABEL_LENGTH')
-        self.BATCH_SIZE = self.config.getint('project', 'BATCH_SIZE')
-        self.IMG_HEIGHT = self.config.getint('project', 'IMG_HEIGHT')
-        self.IMG_WIDTH = self.config.getint('project', 'IMG_WIDTH')
+        self.image_format = self.config['project']['IMAGE_FORMAT']
+        self.max_label_length = self.config.getint('project', 'MAX_LABEL_LENGTH')
+        self.batch_size = self.config.getint('project', 'BATCH_SIZE')
+        self.img_height = self.config.getint('project', 'IMG_HEIGHT')
+        self.img_width = self.config.getint('project', 'IMG_WIDTH')
         self._char_list: str = '\' !"#&()[]*+,-./0123456789:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
-        self.MAX_LABEL_LENGTH = 30
 
         self._characters = sorted(set(list(self._char_list)))
         # Mapping characters to integers
@@ -34,11 +31,19 @@ class HandwritingConfiguration(ABC):
 class TrainerConfiguration(HandwritingConfiguration):
     def __init__(self, config_file_location: Union[Path, str]):
         super().__init__(config_file_location)
-        self.NUM_EPOCHS = self.config.getint('train', 'NUM_EPOCHS')
-        self.SEED = self.config.getint('train', 'SEED')
-        self.EARLY_STOPPING = self.config.getboolean('train', 'EARLY_STOPPING')
+        self.image_set_location = Path(self.config['train']['IMAGE_SET_NAME'])
+        self.metadata_file_name = self.config['train']['METADATA_FILE_NAME']
+        self.metadata_image_column = self.config['train']['METADATA_IMAGE_COLUMN']
+        self.metadata_transcription_column = self.config['train']['METADATA_TRANSCRIPTION_COLUMN']
+        self.num_epochs = self.config.getint('train', 'NUM_EPOCHS')
+        self.seed = self.config.getint('train', 'SEED')
+        self.early_stopping = self.config.getboolean('train', 'EARLY_STOPPING')
 
 
 class TestConfiguration(HandwritingConfiguration):
     def __init__(self, config_file_location: Union[Path, str]):
         super().__init__(config_file_location)
+        self.image_set_location = Path(self.config['test']['IMAGE_SET_NAME'])
+        self.metadata_file_name = self.config['test']['METADATA_FILE_NAME']
+        self.metadata_image_column = self.config['test']['METADATA_IMAGE_COLUMN']
+        self.metadata_transcription_column = self.config['test']['METADATA_TRANSCRIPTION_COLUMN']
