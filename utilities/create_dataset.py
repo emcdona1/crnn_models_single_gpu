@@ -125,7 +125,12 @@ class TrainDataset(HandwritingDataset):
 
         labels = [os.path.basename(l) for l in images]
         labels = [self.metadata[self.metadata['word_image_basenames'] == b] for b in labels]
-        labels = [b[self.c.metadata_transcription_column].item() for b in labels]
+        try:
+            labels = [b[self.c.metadata_transcription_column].item() for b in labels]
+        except ValueError as e:
+            errors = [len(b[self.c.metadata_transcription_column]) for b in labels]
+            print(min(errors))
+            print(max(errors))
         labels = [str(e).ljust(self.c.max_label_length) for e in labels]
 
         self.images_train, self.images_valid, self.labels_train, self.labels_valid = self._split_data(np.array(images),
