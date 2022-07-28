@@ -1,7 +1,8 @@
 import sys
 import os
 from pathlib import Path
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # suppress INFO alert about oneDNN
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # suppress INFO alerts about TF
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '1'  # suppress INFO alerts about oneDNN
 working_dir = os.path.join(os.getcwd())
 sys.path.append(working_dir)
 
@@ -96,7 +97,7 @@ def ray_hyperband_search():
         mode='min',
         stop={'training_iteration': 10},
         num_samples=5,
-        resources_per_trial={'cpu': 1, 'gpu': 1/5},  # to use one GPU total, 'gpu' = 1 / num_samples
+        resources_per_trial={'cpu': 1, 'gpu': 0.2},  # to use one GPU total, 'gpu' = 1 / num_samples
         config={
             'threads': 2,
             'batch_size': tune.choice([32, 64, 158, 256]),
