@@ -81,7 +81,7 @@ def train_ray(config, checkpoint_dir=None):
         "model.h5", monitor='loss', save_best_only=True, save_freq=2)
     history = model.fit(dataset.train_dataset, validation_data=dataset.validation_dataset,
                         epochs=15,
-                        # verbose=0,
+                        verbose=0,
                         callbacks=[checkpoint_callback, TuneReportCallback({'validation_loss': 'val_loss'})])
     print(history)
 
@@ -90,13 +90,13 @@ def ray_hyperband_search():
     scheduler = AsyncHyperBandScheduler(time_attr='training_iteration', max_t=400, grace_period=20)
     analysis = tune.run(
         train_ray,
-        name='exp',  # todo: ??
+        name='iam_train',
         scheduler=scheduler,
         metric='validation_loss',
         mode='min',
-        stop={'training_iteration': 5},  # todo: increase this after testing
-        num_samples=2,  # todo: increase this after testing
-        resources_per_trial={'cpu': 1, 'gpu': 0},
+        stop={'training_iteration': 10},
+        num_samples=5,
+        resources_per_trial={'cpu': 1, 'gpu': 1/5},  # to use one GPU total, 'gpu' = 1 / num_samples
         config={
             'threads': 2,
             'batch_size': tune.choice([32, 64, 158, 256]),
