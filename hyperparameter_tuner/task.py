@@ -68,8 +68,7 @@ def tensorboard_grid_search(dataset):
 
 
 def train_ray(config, checkpoint_dir=None):
-    dataset = TrainDataset(config_location)
-    dataset.create_dataset(config['batch_size'])
+    dataset.update_batch_size(config['batch_size'])
 
     model = create_model(kernel_size=config['kernel_size'],
                          activation='relu',
@@ -121,14 +120,17 @@ if __name__ == "__main__":
     config_location = Path(sys.argv[1]).absolute()
     assert config_location.is_file(), f'{config_location} is not a file.'
 
-    HP_BATCH_SIZE = hp.HParam('batch_size', hp.Discrete([32, 64, 128, 256]))  # 32
-    HP_KERNEL_SIZE = hp.HParam('kernel_size', hp.Discrete([3, 4, 5])) # 3, 4
-    HP_NUM_DENSE_UNITS1 = hp.HParam('num_dense_units1', hp.Discrete([128, 256, 512]))
-    HP_DROPOUT = hp.HParam('dropout', hp.RealInterval(min_value=0.1, max_value=0.5))
-    HP_NUM_DENSE_LTSM1 = hp.HParam('num_dense_ltsm1', hp.IntInterval(min_value=256, max_value=2048))
-    HP_LEARNING_RATE = hp.HParam('learning_rate', hp.RealInterval(min_value=0.0005, max_value=0.1))
-    METRIC_LOSS = 'loss'
-    METRIC_VAL_LOSS = 'val_loss'
+    dataset = TrainDataset(config_location)
+    dataset.create_dataset(4)
+
+    # HP_BATCH_SIZE = hp.HParam('batch_size', hp.Discrete([32, 64, 128, 256]))  # 32
+    # HP_KERNEL_SIZE = hp.HParam('kernel_size', hp.Discrete([3, 4, 5])) # 3, 4
+    # HP_NUM_DENSE_UNITS1 = hp.HParam('num_dense_units1', hp.Discrete([128, 256, 512]))
+    # HP_DROPOUT = hp.HParam('dropout', hp.RealInterval(min_value=0.1, max_value=0.5))
+    # HP_NUM_DENSE_LTSM1 = hp.HParam('num_dense_ltsm1', hp.IntInterval(min_value=256, max_value=2048))
+    # HP_LEARNING_RATE = hp.HParam('learning_rate', hp.RealInterval(min_value=0.0005, max_value=0.1))
+    # METRIC_LOSS = 'loss'
+    # METRIC_VAL_LOSS = 'val_loss'
 
     main()
 
