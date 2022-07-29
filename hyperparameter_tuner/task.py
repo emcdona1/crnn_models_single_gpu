@@ -68,8 +68,8 @@ def tensorboard_grid_search(dataset):
 
 
 def train_ray(config, checkpoint_dir=None):
-    dataset.update_batch_size(config['batch_size'])
-
+    dataset = TrainDataset(config_location)
+    dataset.create_dataset(config['batch_size'])
     model = create_model(kernel_size=config['kernel_size'],
                          activation='relu',
                          num_units_dense1=config['num_dense_units1'],
@@ -119,9 +119,6 @@ if __name__ == "__main__":
     assert len(sys.argv) >= 2, 'Please specify a config file.'
     config_location = Path(sys.argv[1]).absolute()
     assert config_location.is_file(), f'{config_location} is not a file.'
-
-    dataset = TrainDataset(config_location)
-    dataset.create_dataset(4)
 
     # HP_BATCH_SIZE = hp.HParam('batch_size', hp.Discrete([32, 64, 128, 256]))  # 32
     # HP_KERNEL_SIZE = hp.HParam('kernel_size', hp.Discrete([3, 4, 5])) # 3, 4
