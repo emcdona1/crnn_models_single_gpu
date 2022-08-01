@@ -39,10 +39,10 @@ def run(run_dir, hparams: dict, dataset: TrainDataset):
 def tensorboard_grid_search():
     dataset = TrainDataset(config_location)
     dataset.create_dataset(4)
-    with tf.summary.create_file_writer('logs/hparam_tuning').as_default():
+    with tf.summary.create_file_writer('logs/hparam_tuning_grid').as_default():
         hp.hparams_config(
             hparams=[HP_BATCH_SIZE, HP_KERNEL_SIZE, HP_NUM_DENSE_UNITS1,
-                     HP_DROPOUT, HP_NUM_DENSE_LTSM1, HP_LEARNING_RATE],
+                     HP_DROPOUT, HP_NUM_DENSE_LTSM1, HP_NUM_DENSE_LTSM2, HP_LEARNING_RATE],
             metrics=[hp.Metric(METRIC_VAL_LOSS, display_name='Validation Loss')]
         )
     session_num = 0
@@ -123,13 +123,13 @@ if __name__ == "__main__":
     config_location = Path(sys.argv[1]).absolute()
     assert config_location.is_file(), f'{config_location} is not a file.'
 
-    HP_BATCH_SIZE = hp.HParam('batch_size', hp.Discrete([32, 64, 128, 256]))  # 32
-    HP_KERNEL_SIZE = hp.HParam('kernel_size', hp.Discrete([3, 4, 5]))  # 3, 4
-    HP_NUM_DENSE_UNITS1 = hp.HParam('num_dense_units1', hp.Discrete([128, 192, 256, 320, 384, 448, 512]))
-    HP_DROPOUT = hp.HParam('dropout', hp.Discrete([0.1, 0.2, 0.3, 0.4, 0.5]))
-    HP_NUM_DENSE_LTSM1 = hp.HParam('num_dense_ltsm1', hp.Discrete([256, 512, 768, 1024, 1280, 1536, 1792, 2048]))
-    HP_NUM_DENSE_LTSM2 = hp.HParam('num_dense_ltsm2', hp.Discrete([256, 512, 768, 1024, 1280, 1536, 1792, 2048]))
-    HP_LEARNING_RATE = hp.HParam('learning_rate', hp.Discrete([0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]))
+    HP_BATCH_SIZE = hp.HParam('batch_size', hp.Discrete([32, 64, 128]))  # 32
+    HP_KERNEL_SIZE = hp.HParam('kernel_size', hp.Discrete([3, 4]))  # 3, 4
+    HP_NUM_DENSE_UNITS1 = hp.HParam('num_dense_units1', hp.Discrete([256, 320, 384, 448, 512]))
+    HP_DROPOUT = hp.HParam('dropout', hp.Discrete([0.1, 0.2, 0.3, 0.4]))
+    HP_NUM_DENSE_LTSM1 = hp.HParam('num_dense_ltsm1', hp.Discrete([256, 512, 768, 1024]))
+    HP_NUM_DENSE_LTSM2 = hp.HParam('num_dense_ltsm2', hp.Discrete([256, 512, 768, 1024]))
+    HP_LEARNING_RATE = hp.HParam('learning_rate', hp.Discrete([0.0005, 0.001, 0.005, 0.01]))
     METRIC_VAL_LOSS = 'val_loss'
 
     main()
