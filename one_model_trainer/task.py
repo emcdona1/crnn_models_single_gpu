@@ -1,16 +1,30 @@
 import sys
 import os
+import subprocess
+from typing import Union
 
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # suppress INFO
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # suppress oneDNN INFO messages
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 working_dir = os.path.join(os.getcwd())
 sys.path.append(working_dir)
 
 from pathlib import Path
-import argparse
 import tensorflow as tf
+import numpy as np
 import pandas as pd
 from utilities import create_model
 from utilities import TrainDataset
+
+
+def gpu_selection() -> Union[int, bool]:
+    available_gpus = tf.config.list_physical_devices('GPU')
+    if available_gpus:
+        command = 'nvidia-smi --query-gpu=memory.free --format=csv'
+        memory_free_info = subprocess.check_output(command.split()).decode('ascii').split('\n')[:-1][1:]
+        memory_free_values = [int(x.split()[0]) for i, x in enumerate(memory_free_info)]
+        return int(np.argmax(memory_free_values))
+    else:
+        return False
 
 
 def main():
@@ -67,4 +81,9 @@ if __name__ == '__main__':
     assert config_location.is_file(), f'{config_location} is not a file.'
     NAME = sys.argv[2]
 
-    main()
+    gpu = gpu_selection()
+    if gpu:
+        with tf.device(f'/device:GPU:{gpu}'):
+            main()
+    else:
+        main()
