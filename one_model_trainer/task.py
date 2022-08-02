@@ -84,6 +84,7 @@ if __name__ == '__main__':
     gpu = gpu_selection()
     if gpu:
         with tf.device(f'/device:GPU:{gpu}'):
+            print(f'Running on GPU {gpu}.')
             main()
     else:
         main()
