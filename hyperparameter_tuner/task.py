@@ -50,8 +50,7 @@ def fit_new_model():
 def train_test_tensorboard(hparams: dict, dataset: TrainDataset):
     model = create_model(hparams[HP_KERNEL_SIZE], 'relu',
                          hparams[HP_NUM_DENSE_UNITS1], hparams[HP_DROPOUT],
-                         hparams[HP_NUM_DENSE_LTSM1], hparams[HP_NUM_DENSE_LTSM2],
-                         hparams[HP_LEARNING_RATE])
+                         hparams[HP_NUM_DENSE_LTSM1], 1024, hparams[HP_LEARNING_RATE])
     history = model.fit(dataset.train_dataset, validation_data=dataset.validation_dataset,
                         epochs=10,  # todo: change to epochs=c.NUM_EPOCHS after testing
                         callbacks=[TuneReportCallback({'mean_loss': 'val_loss'})])
@@ -74,7 +73,7 @@ def tensorboard_grid_search():
     with tf.summary.create_file_writer('logs/hparam_tuning_grid').as_default():
         hp.hparams_config(
             hparams=[HP_BATCH_SIZE, HP_KERNEL_SIZE, HP_NUM_DENSE_UNITS1,
-                     HP_DROPOUT, HP_NUM_DENSE_LTSM1, HP_NUM_DENSE_LTSM2, HP_LEARNING_RATE],
+                     HP_DROPOUT, HP_NUM_DENSE_LTSM1, HP_LEARNING_RATE],
             metrics=[hp.Metric(METRIC_VAL_LOSS, display_name='Validation Loss')]
         )
     session_num = 0
@@ -83,23 +82,21 @@ def tensorboard_grid_search():
             for dense_1 in HP_NUM_DENSE_UNITS1.domain.values:
                 for dropout in HP_DROPOUT.domain.values:
                     for ltsm_1 in HP_NUM_DENSE_LTSM1.domain.values:
-                        for ltsm_2 in HP_NUM_DENSE_LTSM2.domain.values:
-                            for lr in HP_LEARNING_RATE.domain.values:
-                                dataset.update_batch_size(batch)
-                                hparams = {
-                                    HP_BATCH_SIZE: batch,
-                                    HP_KERNEL_SIZE: kernel,
-                                    HP_NUM_DENSE_UNITS1: dense_1,
-                                    HP_DROPOUT: dropout,
-                                    HP_NUM_DENSE_LTSM1: ltsm_1,
-                                    HP_NUM_DENSE_LTSM2: ltsm_2,
-                                    HP_LEARNING_RATE: lr
-                                }
-                                run_name = f'run-{session_num}'
-                                print(f'--- Starting trial: {run_name}')
-                                print({h.name: hparams[h] for h in hparams})
-                                run('logs/hparam_tuning/' + run_name, hparams, dataset)
-                                session_num += 1
+                        for lr in HP_LEARNING_RATE.domain.values:
+                            dataset.update_batch_size(batch)
+                            hparams = {
+                                HP_BATCH_SIZE: batch,
+                                HP_KERNEL_SIZE: kernel,
+                                HP_NUM_DENSE_UNITS1: dense_1,
+                                HP_DROPOUT: dropout,
+                                HP_NUM_DENSE_LTSM1: ltsm_1,
+                                HP_LEARNING_RATE: lr
+                            }
+                            run_name = f'run-{session_num}'
+                            print(f'--- Starting trial: {run_name}')
+                            print({h.name: hparams[h] for h in hparams})
+                            run('logs/hparam_tuning/' + run_name, hparams, dataset)
+                            session_num += 1
 
 
 def train_ray(config, checkpoint_dir=None):
@@ -147,8 +144,8 @@ def ray_hyperband_search():
 
 def main():
     # ray_hyperband_search()
-    # tensorboard_grid_search()
-    bayesian_search()
+    tensorboard_grid_search()
+    # bayesian_search()
 
 
 if __name__ == "__main__":
@@ -156,13 +153,12 @@ if __name__ == "__main__":
     config_location = Path(sys.argv[1]).absolute()
     assert config_location.is_file(), f'{config_location} is not a file.'
 
-    HP_BATCH_SIZE = hp.HParam('batch_size', hp.Discrete([32, 64, 128]))  # 32
-    HP_KERNEL_SIZE = hp.HParam('kernel_size', hp.Discrete([3, 4]))  # 3, 4
-    HP_NUM_DENSE_UNITS1 = hp.HParam('num_dense_units1', hp.Discrete([256, 320, 384, 448, 512]))
+    HP_BATCH_SIZE = hp.HParam('batch_size', hp.Discrete([32, 128]))
+    HP_KERNEL_SIZE = hp.HParam('kernel_size', hp.Discrete([3]))  # 3, 4
+    HP_NUM_DENSE_UNITS1 = hp.HParam('num_dense_units1', hp.Discrete([128, 256, 512]))
     HP_DROPOUT = hp.HParam('dropout', hp.Discrete([0.1, 0.2, 0.3, 0.4]))
     HP_NUM_DENSE_LTSM1 = hp.HParam('num_dense_ltsm1', hp.Discrete([256, 512, 768, 1024]))
-    HP_NUM_DENSE_LTSM2 = hp.HParam('num_dense_ltsm2', hp.Discrete([256, 512, 768, 1024]))
-    HP_LEARNING_RATE = hp.HParam('learning_rate', hp.Discrete([0.0005, 0.001, 0.005, 0.01]))
+    HP_LEARNING_RATE = hp.HParam('learning_rate', hp.Discrete([0.0005, 0.005, 0.01, 0.05, 0.1]))
     METRIC_VAL_LOSS = 'val_loss'
 
     main()
