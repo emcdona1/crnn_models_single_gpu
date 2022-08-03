@@ -9,7 +9,7 @@ sys.path.append(working_dir)
 from pathlib import Path
 import tensorflow as tf
 import pandas as pd
-from utilities import create_model
+from utilities import create_model, CTCLayer
 from utilities import TrainDataset
 from utilities import gpu_selection
 
@@ -48,7 +48,7 @@ def main():
 
     training_model_name = f'{NAME}-full_model'
     save_location = Path(results_folder, f'{training_model_name}.h5')
-    model.save(save_location)
+    model.save(save_location, custom_objects={'CTCLayer': CTCLayer})
     print(f'Training model saved to: {save_location}')
 
     # create and save prediction model
@@ -58,7 +58,7 @@ def main():
     prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=learning_rate))
     prediction_model_name = f'{NAME}-prediction'
     save_location = Path(results_folder, f'{prediction_model_name}.h5')
-    prediction_model.save(save_location)
+    prediction_model.save(save_location, custom_objects={'CTCLayer': CTCLayer})
     print(f'Prediction model saved to: {save_location}')
 
     
