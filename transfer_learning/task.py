@@ -10,6 +10,7 @@ import tensorflow as tf
 from tensorflow import keras
 from utilities import TrainDataset
 from utilities import TrainerConfiguration
+from utilities import gpu_selection
 
 
 def main():
@@ -65,4 +66,10 @@ if __name__ == '__main__':
     if not save_folder.exists():
         os.makedirs(save_folder)
 
-    main()
+    gpu = gpu_selection()
+    if gpu:
+        with tf.device(f'/device:GPU:{gpu}'):
+            print(f'Running on GPU {gpu}.')
+            main()
+    else:
+        main()
