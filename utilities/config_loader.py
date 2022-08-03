@@ -43,6 +43,7 @@ class TrainerConfiguration(HandwritingConfiguration):
         self.num_epochs = self.config.getint('train', 'NUM_EPOCHS')
         self.seed = self.config.getint('train', 'SEED')
         self.early_stopping = self.config.getboolean('train', 'EARLY_STOPPING')
+        self.learning_rate = self.config.getfloat('train', 'LEARNING_RATE')
 
 
 class TestConfiguration(HandwritingConfiguration):
