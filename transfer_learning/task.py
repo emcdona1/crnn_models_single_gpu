@@ -13,7 +13,7 @@ from utilities import gpu_selection, CTCLayer
 
 
 def main():
-    base_model = keras.models.load_model(base_model_path, custom_objects={"CTCLayer": CTCLayer})
+    base_model = keras.models.load_model(base_model_path, custom_objects={'CTCLayer': CTCLayer})
     data = TrainDataset(c)
     data.create_dataset(c.batch_size, c.image_set_location, c.metadata_file_name)
     retrained_model = retrain_model(base_model, data)
@@ -29,13 +29,13 @@ def retrain_model(model: keras.Model, data: TrainDataset):
 
     history = model.fit(data.train_dataset, epochs=100, validation_data=data.validation_dataset)
 
-    model.save(Path(save_folder, 'retrained-full_model'))
+    model.save(Path(save_folder, 'retrained-full_model'), custom_objects={'CTCLayer': CTCLayer})
 
     prediction_model = tf.keras.models.Model(
         model.get_layer(name='image').input, model.get_layer(name='dense_layer').output
     )
     prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=c.learning_rate))
-    prediction_model.save(Path(save_folder, 'retrained'))
+    prediction_model.save(Path(save_folder, 'retrained'), custom_objects={'CTCLayer': CTCLayer})
     return model
 
 
@@ -45,13 +45,13 @@ def fine_tune_model(model: keras.Model, data: TrainDataset):
     model.compile(keras.optimizers.Adam(learning_rate=1e-5))
     history_fine_tune = model.fit(data.train_dataset, epochs=100, validation_data=data.validation_dataset)
 
-    model.save(Path(save_folder, 'fine_tuned-full_model'))
+    model.save(Path(save_folder, 'fine_tuned-full_model'), custom_objects={'CTCLayer': CTCLayer})
 
     prediction_model = tf.keras.models.Model(
         model.get_layer(name='image').input, model.get_layer(name='dense_layer').output
     )
     prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=c.learning_rate))
-    prediction_model.save(Path(save_folder, 'fine_tuned'))
+    prediction_model.save(Path(save_folder, 'fine_tuned'), custom_objects={'CTCLayer': CTCLayer})
     return model
 
 

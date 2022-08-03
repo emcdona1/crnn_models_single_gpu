@@ -43,7 +43,6 @@ def bayesian_search(hparam):
 
 
 def fit_new_model():
-
     pass
 
 
