@@ -8,13 +8,12 @@ sys.path.append(working_dir)
 from pathlib import Path
 import tensorflow as tf
 from tensorflow import keras
-from utilities import TrainDataset
-from utilities import TrainerConfiguration
-from utilities import gpu_selection
+from utilities import TrainDataset, TrainerConfiguration
+from utilities import gpu_selection, CTCLayer
 
 
 def main():
-    base_model = keras.models.load_model(base_model_path)
+    base_model = keras.models.load_model(base_model_path, custom_objects={"CTCLayer": CTCLayer})
     data = TrainDataset(c)
     data.create_dataset(c.batch_size, c.image_set_location, c.metadata_file_name)
     retrained_model = retrain_model(base_model, data)
