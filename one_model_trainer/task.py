@@ -1,13 +1,13 @@
 import sys
 import os
 import subprocess
-from typing import Union
 
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # suppress oneDNN INFO messages
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 working_dir = os.path.join(os.getcwd())
 sys.path.append(working_dir)
 
+from typing import Union
 from pathlib import Path
 import tensorflow as tf
 import numpy as np
