@@ -10,7 +10,7 @@ class HandwritingConfiguration(ABC):
         self.config = configparser.ConfigParser()
         if not self.config.read(Path(config_file_location)):
             raise FileNotFoundError(f'{config_file_location} does not exist or is not a configuration file.')
-        self.base_directory = config_file_location.parent
+        self.base_directory = config_file_location.absolute().parent
         self.image_format = self.config['project']['IMAGE_FORMAT']
         self.max_label_length = self.config.getint('project', 'MAX_LABEL_LENGTH')
         self.batch_size = self.config.getint('project', 'BATCH_SIZE')
@@ -54,3 +54,4 @@ class TestConfiguration(HandwritingConfiguration):
                                        self.config['test']['METADATA_FILE_NAME'])
         self.metadata_image_column = self.config['test']['METADATA_IMAGE_COLUMN']
         self.metadata_transcription_column = self.config['test']['METADATA_TRANSCRIPTION_COLUMN']
+        self.model_file = Path(self.base_directory, self.config['test']['MODEL_FILE'])
