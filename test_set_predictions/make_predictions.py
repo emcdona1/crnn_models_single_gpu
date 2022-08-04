@@ -1,7 +1,9 @@
 import sys
 import os
-root_dir = os.path.join(os.getcwd(), '..')
-sys.path.append(root_dir)
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # suppress oneDNN INFO messages
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+working_dir = os.path.join(os.getcwd())
+sys.path.append(working_dir)
 
 from pathlib import Path
 import tensorflow as tf
