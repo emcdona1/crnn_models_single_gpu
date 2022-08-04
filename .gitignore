@@ -10,3 +10,4 @@ logs/*
 *.idea*
 *test*
 /saved_models/
+/logs/
