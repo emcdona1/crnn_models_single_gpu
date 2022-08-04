@@ -8,14 +8,14 @@ import tensorflow as tf
 import pandas as pd
 from utilities import TestConfiguration
 from utilities import TestDataset
-from utilities import CTCLayer
-config = TestConfiguration(Path('../setup_tester.cfg'))
+from utilities import CTCLayer, gpu_selection
 
 
 def main():
-    test_dataset = TestDataset(config)
+    c = TestConfiguration(config_location)
+    test_dataset = TestDataset(c)
     test_dataset.create_dataset(32)
-    prediction_model = tf.keras.models.load_model(config.model_file, custom_objects={'CTCLayer': CTCLayer})
+    prediction_model = tf.keras.models.load_model(c.model_file, custom_objects={'CTCLayer': CTCLayer})
     prediction_model.compile(optimizer=tf.keras.optimizers.Adam())
 
     prediction_results = pd.DataFrame(columns=['label', 'prediction'])
@@ -36,8 +36,17 @@ def main():
 
     if not os.path.exists('predictions'):
         os.makedirs('predictions')
-    prediction_results.to_csv(Path('predictions', f'{config.model_file.stem}-predictions.csv'))
+    prediction_results.to_csv(Path('predictions', f'{c.model_file.stem}-predictions.csv'))
 
 
 if __name__ == '__main__':
-    main()
+    assert len(sys.argv) == 2, 'Please specify a config file.'
+    config_location = Path(sys.argv[1]).absolute()
+
+    gpu = gpu_selection()
+    if gpu:
+        with tf.device(f'/device:GPU:{gpu}'):
+            print(f'Running on GPU {gpu}.')
+            main()
+    else:
+        main()
