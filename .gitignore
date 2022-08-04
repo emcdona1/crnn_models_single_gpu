@@ -9,3 +9,4 @@ transfer_learning/*/
 logs/*
 *.idea*
 *test*
+/saved_models/
