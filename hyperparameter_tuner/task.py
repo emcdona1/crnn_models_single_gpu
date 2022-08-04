@@ -11,9 +11,9 @@ from ray import tune
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.integration.keras import TuneReportCallback
 from tensorboard.plugins.hparams import api as hp
-from skopt import gp_minimize
-from skopt.space import Real, Integer
-from skopt.utils import use_named_args
+# from skopt import gp_minimize
+# from skopt.space import Real, Integer
+# from skopt.utils import use_named_args
 from utilities import create_model
 from utilities import TrainDataset
 
@@ -23,23 +23,23 @@ best_accuracy = 0.0
 
 
 # todo yeah these aren't supposed to be together
-@use_named_args(dimensions=dimensions)
-def bayesian_search(hparam):
-    dim_batch_size = Integer(low=32, high=256, name='batch_size')
-    dim_kernel_size = Integer(low=3, high=5, name='kernel_size')
-    dim_num_dense_units1 = Integer(low=128, high=512, name='num_dense_units1')
-    dim_dropout = Real(low=0.1, high=0.5, name='dropout')
-    dim_num_dense_ltsm1 = Integer(low=256, high=2048, name='num_dense_ltsm1')
-    dim_num_dense_ltsm2 = Integer(low=256, high=2048, name='num_dense_ltsm1')
-    dim_learning_rate = Real(low=0.0005, high=0.1,  prior='log-uniform',name='learning_rate')
-    dimensions = [dim_batch_size, dim_kernel_size, dim_num_dense_units1, dim_dropout,
-                  dim_num_dense_ltsm1, dim_num_dense_ltsm2, dim_learning_rate]
-    gp_minimize(fit_new_model,
-                foo)
-    search_result = gp_minimize(func=fit_new_model,
-                                dimensions=dimensions,
-                                acq_func='EI',  # Expected Improvement.
-                                n_calls=40
+# @use_named_args(dimensions=dimensions)
+# def bayesian_search(hparam):
+#     dim_batch_size = Integer(low=32, high=256, name='batch_size')
+#     dim_kernel_size = Integer(low=3, high=5, name='kernel_size')
+#     dim_num_dense_units1 = Integer(low=128, high=512, name='num_dense_units1')
+#     dim_dropout = Real(low=0.1, high=0.5, name='dropout')
+#     dim_num_dense_ltsm1 = Integer(low=256, high=2048, name='num_dense_ltsm1')
+#     dim_num_dense_ltsm2 = Integer(low=256, high=2048, name='num_dense_ltsm1')
+#     dim_learning_rate = Real(low=0.0005, high=0.1,  prior='log-uniform',name='learning_rate')
+#     dimensions = [dim_batch_size, dim_kernel_size, dim_num_dense_units1, dim_dropout,
+#                   dim_num_dense_ltsm1, dim_num_dense_ltsm2, dim_learning_rate]
+#     gp_minimize(fit_new_model,
+#                 foo)
+#     search_result = gp_minimize(func=fit_new_model,
+#                                 dimensions=dimensions,
+#                                 acq_func='EI',  # Expected Improvement.
+#                                 n_calls=40
 
 
 def fit_new_model():
