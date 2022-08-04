@@ -80,19 +80,6 @@ class HandwritingDataset(ABC):
         # 7. Return a dict as our model is expecting two inputs
         return {'image': img, 'label': label}
 
-    def decode_batch_predictions(self, pred):
-        input_len = np.ones(pred.shape[0]) * pred.shape[1]
-        # Use greedy search. For complex tasks, you can use beam search
-        results = tf.keras.backend.ctc_decode(pred, input_length=input_len, greedy=True)[0][0][
-                  :, :self.c.max_label_length
-                  ]
-        # Iterate over the results and get back the text
-        output_text = []
-        for res in results:
-            res = tf.strings.reduce_join(self.num_to_char(res)).numpy().decode('utf-8')
-            output_text.append(res)
-        return output_text
-
 
 class TrainDataset(HandwritingDataset):
     def __init__(self, configuration: Union[Path, str, HandwritingConfiguration]):
@@ -163,3 +150,16 @@ class TestDataset(HandwritingDataset):
         x_test = np.array(images)
         y_test = np.array(labels)
         self.test_dataset = self._encode_dataset(batch_size, x_test, y_test)
+
+    def decode_batch_predictions(self, pred):
+        input_len = np.ones(pred.shape[0]) * pred.shape[1]
+        # Use greedy search. For complex tasks, you can use beam search
+        results = tf.keras.backend.ctc_decode(pred, input_length=input_len, greedy=True)[0][0][
+                  :, :self.c.max_label_length
+                  ]
+        # Iterate over the results and get back the text
+        output_text = []
+        for res in results:
+            res = tf.strings.reduce_join(self.num_to_char(res)).numpy().decode('utf-8')
+            output_text.append(res)
+        return output_text
