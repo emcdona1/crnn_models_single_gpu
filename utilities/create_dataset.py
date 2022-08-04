@@ -106,8 +106,8 @@ class TrainDataset(HandwritingDataset):
 
     def create_dataset(self, batch_size: int, image_folder: Path = '', metadata_filename=''):
         self.folder = (image_folder.absolute() if image_folder else self.c.image_set_location)
-        if metadata_filename:
-            metadata_filename = Path(self.folder, metadata_filename).absolute()
+        metadata_filename = Path(self.folder, metadata_filename).absolute() \
+            if metadata_filename else self.c.metadata_file_name
         self.metadata = pd.read_csv(metadata_filename)
         col = self.metadata[self.c.metadata_image_column]
         self.metadata['word_image_basenames'] = col.apply(lambda f: os.path.basename(Path(f)))
