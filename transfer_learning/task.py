@@ -31,13 +31,13 @@ def retrain_model(model: keras.Model, data: TrainDataset):
                                                     epochs=100,
                                                     validation_data=data.validation_dataset)
 
-    model.save(Path(save_folder, 'retrained-full_model.h5'))
+    model.save(Path(save_folder, f'{NAME}-retrained-full_model.h5'))
 
     prediction_model = tf.keras.models.Model(
         model.get_layer(name='image').input, model.get_layer(name='dense_layer').output
     )
     prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=c.learning_rate))
-    prediction_model.save(Path(save_folder, 'retrained.h5'))
+    prediction_model.save(Path(save_folder, f'{NAME}-retrained.h5'))
     return model
 
 
@@ -49,22 +49,24 @@ def fine_tune_model(model: keras.Model, data: TrainDataset):
                                                               epochs=100,
                                                               validation_data=data.validation_dataset)
 
-    model.save(Path(save_folder, 'fine_tuned-full_model.h5'))
+    model.save(Path(save_folder, f'{NAME}-fine_tuned-full_model.h5'))
 
     prediction_model = tf.keras.models.Model(
         model.get_layer(name='image').input, model.get_layer(name='dense_layer').output
     )
     prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=c.learning_rate))
-    prediction_model.save(Path(save_folder, 'fine_tuned.h5'))
+    prediction_model.save(Path(save_folder, f'{NAME}-fine_tuned.h5'))
     return model
 
 
 if __name__ == '__main__':
-    assert len(sys.argv) == 3, 'Please specify two arguments: 1) a config file, and 2) a path to a base model.'
+    assert len(sys.argv) == 4, 'Please specify 3 arguments: 1) a config file, 2) a path to a base model, ' +\
+                               '& 3) a training run name.'
     c = TrainerConfiguration(Path(sys.argv[1]))
-
     base_model_path = Path(sys.argv[2])
     assert base_model_path.absolute().exists(), f'{base_model_path} is not a valid path.'
+    NAME = sys.argv[3]
+
     save_folder = Path('./saved_models')
     if not save_folder.exists():
         os.makedirs(save_folder)
