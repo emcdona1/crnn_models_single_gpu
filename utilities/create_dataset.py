@@ -105,15 +105,10 @@ class TrainDataset(HandwritingDataset):
         return x_train, x_valid, y_train, y_valid
 
     def create_dataset(self, batch_size: int, image_folder: Path = '', metadata_filename=''):
-        if image_folder:
-            self.folder = image_folder.absolute()
-        else:
-            self.folder = self.c.image_set_location
+        self.folder = (image_folder.absolute() if image_folder else self.c.image_set_location)
         if metadata_filename:
-            metadata_location = Path(self.folder, metadata_filename).absolute()
-        else:
-            metadata_location = Path(self.folder, self.c.metadata_file_name).absolute()
-        self.metadata = pd.read_csv(metadata_location)
+            metadata_filename = Path(self.folder, metadata_filename).absolute()
+        self.metadata = pd.read_csv(metadata_filename)
         col = self.metadata[self.c.metadata_image_column]
         self.metadata['word_image_basenames'] = col.apply(lambda f: os.path.basename(Path(f)))
 
@@ -186,9 +181,10 @@ class TestDataset(HandwritingDataset):
         self.size = None    
     
     def create_dataset(self, batch_size: int, image_folder: Path, metadata_filename=''):
-        self.folder = image_folder if image_folder else self.c.image_set_location
-        self.metadata = metadata_filename if metadata_filename else self.c.metadata_file_name
-        self.metadata = pd.read_csv(Path(self.folder, self.metadata))
+        self.folder = (image_folder.absolute() if image_folder else self.c.image_set_location)
+        if metadata_filename:
+            metadata_filename = Path(self.folder, metadata_filename).absolute()
+        self.metadata = pd.read_csv(metadata_filename)
         columns_to_drop = self.metadata.index[pd.isna(self.metadata[self.c.metadata_transcription_column])]
         self.metadata = self.metadata.drop(columns_to_drop)
         self.metadata['word_image_basenames'] = self.metadata[self.c.metadata_image_column].\
