@@ -31,13 +31,13 @@ def retrain_model(model: keras.Model, data: TrainDataset):
                                                     epochs=100,
                                                     validation_data=data.validation_dataset)
 
-    model.save(Path(save_folder, 'retrained-full_model'))
+    model.save(Path(save_folder, 'retrained-full_model.h5'))
 
     prediction_model = tf.keras.models.Model(
         model.get_layer(name='image').input, model.get_layer(name='dense_layer').output
     )
     prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=c.learning_rate))
-    prediction_model.save(Path(save_folder, 'retrained'))
+    prediction_model.save(Path(save_folder, 'retrained.h5'))
     return model
 
 
@@ -49,13 +49,13 @@ def fine_tune_model(model: keras.Model, data: TrainDataset):
                                                               epochs=100,
                                                               validation_data=data.validation_dataset)
 
-    model.save(Path(save_folder, 'fine_tuned-full_model'))
+    model.save(Path(save_folder, 'fine_tuned-full_model.h5'))
 
     prediction_model = tf.keras.models.Model(
         model.get_layer(name='image').input, model.get_layer(name='dense_layer').output
     )
     prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=c.learning_rate))
-    prediction_model.save(Path(save_folder, 'fine_tuned'))
+    prediction_model.save(Path(save_folder, 'fine_tuned.h5'))
     return model
 
 
