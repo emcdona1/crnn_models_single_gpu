@@ -32,12 +32,10 @@ class HandwritingConfiguration(ABC):
 class TrainerConfiguration(HandwritingConfiguration):
     def __init__(self, config_file_location: Union[Path, str]):
         super().__init__(config_file_location)
-
         self.image_set_location = Path(self.config['train']['IMAGE_SET_NAME'])
         if not self.image_set_location.is_absolute():
             self.image_set_location = Path(self.base_directory, self.image_set_location)
-        self.metadata_file_name = Path(self.base_directory, self.image_set_location,
-                                       self.config['train']['METADATA_FILE_NAME'])
+        self.metadata_file_name = Path(self.image_set_location, self.config['train']['METADATA_FILE_NAME'])
         self.metadata_image_column = self.config['train']['METADATA_IMAGE_COLUMN']
         self.metadata_transcription_column = self.config['train']['METADATA_TRANSCRIPTION_COLUMN']
         self.num_epochs = self.config.getint('train', 'NUM_EPOCHS')
