@@ -134,41 +134,6 @@ class TrainDataset(HandwritingDataset):
         self.train_dataset = self._encode_dataset(batch_size, self.images_train, self.labels_train)
         self.validation_dataset = self._encode_dataset(batch_size, self.images_valid, self.labels_valid)
 
-    def create_dataset_temp(self, batch_size: int, image_folder: Path = '', metadata_filename=''):
-        if image_folder:
-            self.folder = image_folder.absolute()
-        else:
-            self.folder = self.c.image_set_location
-        if metadata_filename:
-            metadata_location = Path(self.folder, metadata_filename).absolute()
-        else:
-            metadata_location = Path(self.folder, self.c.metadata_file_name).absolute()
-        self.metadata = pd.read_csv(metadata_location)
-        col = self.metadata[self.c.metadata_image_column]
-        self.metadata['word_image_basenames'] = col.apply(lambda f: os.path.basename(Path(f)))
-
-        images = list()
-        images.extend(self.folder.rglob('*.png'))
-        images.extend(self.folder.rglob('*.jpg'))
-        images = sorted(list(map(str, images)))
-        print(len(images))
-
-        labels = [os.path.basename(l) for l in images]
-        labels = [self.metadata[self.metadata['word_image_basenames'] == b] for b in labels]
-        labels = [b[self.c.metadata_transcription_column].item() for b in labels]
-        labels = [str(e).ljust(self.c.max_label_length) for e in labels]
-
-        self.images_train, self.images_valid, self.labels_train, self.labels_valid = self._split_data(np.array(images),
-                                                                                                      np.array(labels))
-
-        print(f'Training images ({self.images_train.shape[0]}) and labels ({self.labels_train.shape[0]}) loaded.')
-        print(f'Validation images ({self.images_valid.shape[0]}) and labels ({self.labels_valid.shape[0]}) loaded.')
-        self.train_size = self.images_train.shape[0]
-        self.validation_size = self.images_valid.shape[0]
-
-        self.train_dataset = self._encode_dataset(batch_size, self.images_train, self.labels_train)
-        self.validation_dataset = self._encode_dataset(batch_size, self.images_valid, self.labels_valid)
-
     def update_batch_size(self, batch_size: int):
         self.train_dataset = self._encode_dataset(batch_size, self.images_train, self.labels_train)
         self.validation_dataset = self._encode_dataset(batch_size, self.images_valid, self.labels_valid)
