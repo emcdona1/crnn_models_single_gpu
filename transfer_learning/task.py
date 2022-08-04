@@ -27,15 +27,17 @@ def retrain_model(model: keras.Model, data: TrainDataset):
     model.layers[-1].trainable = True
     model.compile(keras.optimizers.Adam(learning_rate=c.learning_rate))
 
-    history = model.fit(data.train_dataset, epochs=100, validation_data=data.validation_dataset)
+    history: tf.keras.callbacks.History = model.fit(data.train_dataset,
+                                                    epochs=100,
+                                                    validation_data=data.validation_dataset)
 
-    model.save(Path(save_folder, 'retrained-full_model'), custom_objects={'CTCLayer': CTCLayer})
+    model.save(Path(save_folder, 'retrained-full_model'))
 
     prediction_model = tf.keras.models.Model(
         model.get_layer(name='image').input, model.get_layer(name='dense_layer').output
     )
     prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=c.learning_rate))
-    prediction_model.save(Path(save_folder, 'retrained'), custom_objects={'CTCLayer': CTCLayer})
+    prediction_model.save(Path(save_folder, 'retrained'))
     return model
 
 
@@ -43,15 +45,17 @@ def fine_tune_model(model: keras.Model, data: TrainDataset):
     # Then, fine tune the model
     model.trainable = True
     model.compile(keras.optimizers.Adam(learning_rate=1e-5))
-    history_fine_tune = model.fit(data.train_dataset, epochs=100, validation_data=data.validation_dataset)
+    history_fine_tune: tf.keras.callbacks.History = model.fit(data.train_dataset,
+                                                              epochs=100,
+                                                              validation_data=data.validation_dataset)
 
-    model.save(Path(save_folder, 'fine_tuned-full_model'), custom_objects={'CTCLayer': CTCLayer})
+    model.save(Path(save_folder, 'fine_tuned-full_model'))
 
     prediction_model = tf.keras.models.Model(
         model.get_layer(name='image').input, model.get_layer(name='dense_layer').output
     )
     prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=c.learning_rate))
-    prediction_model.save(Path(save_folder, 'fine_tuned'), custom_objects={'CTCLayer': CTCLayer})
+    prediction_model.save(Path(save_folder, 'fine_tuned'))
     return model
 
 
