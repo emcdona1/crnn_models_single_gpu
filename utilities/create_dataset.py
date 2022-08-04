@@ -5,17 +5,15 @@ from pathlib import Path
 from typing import Union
 import tensorflow as tf
 from tensorflow import keras
-from .config_loader import TrainerConfiguration
+from .config_loader import HandwritingConfiguration, TrainerConfiguration, TestConfiguration
 from abc import ABC, abstractmethod
 
 
 class HandwritingDataset(ABC):
-    def __init__(self, configuration: Union[Path, str, TrainerConfiguration]):
-        if type(configuration) is TrainerConfiguration:
-            self.c = configuration
-        else:
-            self.c = TrainerConfiguration(configuration)
+    def __init__(self):
+        self.c = None
         self.folder = None
+        self.metadata_filename = None
         self.metadata = None
         self.CHAR_LIST: str = '\' !"#&()[]*+,-./0123456789:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
         self.characters = sorted(set(list(self.CHAR_LIST)))
@@ -30,9 +28,27 @@ class HandwritingDataset(ABC):
         )
     
     @abstractmethod
-    def create_dataset(self, batch_size: int, image_folder: Path, metadata_filename=''):
+    def create_dataset(self, batch_size: int, image_folder: Path = '', metadata_filename=''):
         pass
+    
+    def _load_images(self):
+        self.metadata = pd.read_csv(self.metadata_filename)
+        col = self.metadata[self.c.metadata_image_column]
+        self.metadata['word_image_basenames'] = col.apply(lambda f: os.path.basename(Path(f)))
 
+        images = list()
+        images.extend(self.folder.rglob('*.png'))
+        images.extend(self.folder.rglob('*.jpg'))
+        images = sorted(list(map(str, images)))
+        print(len(images))
+
+        labels = [os.path.basename(l) for l in images]
+        labels = [self.metadata[self.metadata['word_image_basenames'] == b] for b in labels]
+        labels = [b[self.c.metadata_transcription_column].item() for b in labels]
+        labels = [str(e).ljust(self.c.max_label_length) for e in labels]
+        
+        return images, labels
+    
     def _encode_dataset(self, batch_size, images, labels) -> tf.data.Dataset:
         dataset = tf.data.Dataset.from_tensor_slices((images, labels))
         dataset = (
@@ -79,8 +95,11 @@ class HandwritingDataset(ABC):
 
 
 class TrainDataset(HandwritingDataset):
-    def __init__(self, configuration: Union[Path, str, TrainerConfiguration]):
-        super().__init__(configuration)
+    def __init__(self, configuration: Union[Path, str, HandwritingConfiguration]):
+        super().__init__()
+        self.c = configuration \
+            if isinstance(configuration, HandwritingConfiguration) \
+            else TrainerConfiguration(configuration)
         self.train_dataset = None
         self.validation_dataset = None
         self.images_train = None
@@ -106,23 +125,9 @@ class TrainDataset(HandwritingDataset):
 
     def create_dataset(self, batch_size: int, image_folder: Path = '', metadata_filename=''):
         self.folder = (image_folder.absolute() if image_folder else self.c.image_set_location)
-        metadata_filename = Path(self.folder, metadata_filename).absolute() \
+        self.metadata_filename = Path(self.folder, metadata_filename).absolute() \
             if metadata_filename else self.c.metadata_file_name
-        self.metadata = pd.read_csv(metadata_filename)
-        col = self.metadata[self.c.metadata_image_column]
-        self.metadata['word_image_basenames'] = col.apply(lambda f: os.path.basename(Path(f)))
-
-        images = list()
-        images.extend(self.folder.rglob('*.png'))
-        images.extend(self.folder.rglob('*.jpg'))
-        images = sorted(list(map(str, images)))
-        print(len(images))
-
-        labels = [os.path.basename(l) for l in images]
-        labels = [self.metadata[self.metadata['word_image_basenames'] == b] for b in labels]
-        labels = [b[self.c.metadata_transcription_column].item() for b in labels]
-        labels = [str(e).ljust(self.c.max_label_length) for e in labels]
-
+        images, labels = super(TrainDataset, self)._load_images()
         self.images_train, self.images_valid, self.labels_train, self.labels_valid = self._split_data(np.array(images),
                                                                                                       np.array(labels))
 
@@ -140,31 +145,19 @@ class TrainDataset(HandwritingDataset):
 
 
 class TestDataset(HandwritingDataset):
-    def __init__(self, configuration: Union[Path, str, TrainerConfiguration]):
-        super().__init__(configuration)
+    def __init__(self, configuration: Union[Path, str, HandwritingConfiguration]):
+        super().__init__()
+        self.c = configuration \
+            if isinstance(configuration, HandwritingConfiguration) \
+            else TestConfiguration(configuration)
         self.test_dataset = None
         self.size = None    
     
-    def create_dataset(self, batch_size: int, image_folder: Path, metadata_filename=''):
+    def create_dataset(self, batch_size: int, image_folder: Path = '', metadata_filename=''):
         self.folder = (image_folder.absolute() if image_folder else self.c.image_set_location)
-        if metadata_filename:
-            metadata_filename = Path(self.folder, metadata_filename).absolute()
-        self.metadata = pd.read_csv(metadata_filename)
-        columns_to_drop = self.metadata.index[pd.isna(self.metadata[self.c.metadata_transcription_column])]
-        self.metadata = self.metadata.drop(columns_to_drop)
-        self.metadata['word_image_basenames'] = self.metadata[self.c.metadata_image_column].\
-            apply(lambda f: os.path.basename(Path(f)))
-
-        images = list()
-        images.extend(self.folder.rglob('*.png'))
-        images.extend(self.folder.rglob('*.jpg'))
-        images = sorted(list(map(str, images)))
-        print(len(images))
-
-        labels = [os.path.basename(l) for l in images]
-        labels = [self.metadata[self.metadata['word_image_basenames'] == b] for b in labels]
-        labels = [b[self.c.metadata_transcription_column].item() for b in labels]
-        labels = [str(e).ljust(self.c.max_label_length) for e in labels]
+        self.metadata_filename = Path(self.folder, metadata_filename).absolute() \
+            if metadata_filename else self.c.metadata_file_name
+        images, labels = super(TestDataset, self)._load_images()
 
         self.size = len(images)
         x_test = np.array(images)
