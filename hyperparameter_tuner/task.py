@@ -16,6 +16,7 @@ from tensorboard.plugins.hparams import api as hp
 # from skopt.utils import use_named_args
 from utilities import create_model
 from utilities import TrainDataset
+from utilities import gpu_selection
 
 
 global best_accuracy
@@ -160,7 +161,18 @@ if __name__ == "__main__":
     HP_LEARNING_RATE = hp.HParam('learning_rate', hp.Discrete([0.0005, 0.005, 0.01, 0.05, 0.1]))
     METRIC_VAL_LOSS = 'val_loss'
 
-    main()
+    try:
+        gpu = gpu_selection()
+        if gpu:
+            with tf.device(f'/device:GPU:{gpu}'):
+                print(f'Running on GPU {gpu}.')
+                main()
+        else:
+            main()
+    except Exception as e:
+        print(e)
+        tf.keras.backend.clear_session()
+        exit(0)
 
     # View results in iPython:
     # %load_ext tensorboard
