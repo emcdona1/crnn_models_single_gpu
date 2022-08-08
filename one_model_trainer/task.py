@@ -48,7 +48,7 @@ def main():
 
     training_model_name = f'{NAME}-full_model'
     save_location = Path(results_folder, f'{training_model_name}.h5')
-    model.save(save_location, custom_objects={'CTCLayer': CTCLayer})
+    model.save(save_location)
     print(f'Training model saved to: {save_location}')
 
     # create and save prediction model
@@ -58,7 +58,7 @@ def main():
     prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=learning_rate))
     prediction_model_name = f'{NAME}-prediction'
     save_location = Path(results_folder, f'{prediction_model_name}.h5')
-    prediction_model.save(save_location, custom_objects={'CTCLayer': CTCLayer})
+    prediction_model.save(save_location)
     print(f'Prediction model saved to: {save_location}')
 
     
