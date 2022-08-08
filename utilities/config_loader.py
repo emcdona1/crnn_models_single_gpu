@@ -16,6 +16,9 @@ class HandwritingConfiguration(ABC):
         self.batch_size = self.config.getint('project', 'BATCH_SIZE')
         self.img_height = self.config.getint('project', 'IMG_HEIGHT')
         self.img_width = self.config.getint('project', 'IMG_WIDTH')
+        self.metadata_file_name = self.config['project']['METADATA_FILE_NAME']
+        self.metadata_image_column = self.config['project']['METADATA_IMAGE_COLUMN']
+        self.metadata_transcription_column = self.config['project']['METADATA_TRANSCRIPTION_COLUMN']
         self._char_list: str = '\' !"#&()[]*+,-./0123456789:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 
         self._characters = sorted(set(list(self._char_list)))
@@ -35,9 +38,7 @@ class TrainerConfiguration(HandwritingConfiguration):
         self.image_set_location = Path(self.config['train']['IMAGE_SET_NAME'])
         if not self.image_set_location.is_absolute():
             self.image_set_location = Path(self.base_directory, self.image_set_location)
-        self.metadata_file_name = Path(self.image_set_location, self.config['train']['METADATA_FILE_NAME'])
-        self.metadata_image_column = self.config['train']['METADATA_IMAGE_COLUMN']
-        self.metadata_transcription_column = self.config['train']['METADATA_TRANSCRIPTION_COLUMN']
+        self.metadata_file_name = Path(self.image_set_location, self.metadata_file_name)
         self.num_epochs = self.config.getint('train', 'NUM_EPOCHS')
         self.seed = self.config.getint('train', 'SEED')
         self.early_stopping = self.config.getboolean('train', 'EARLY_STOPPING')
@@ -50,8 +51,5 @@ class TestConfiguration(HandwritingConfiguration):
         self.image_set_location = Path(self.config['test']['IMAGE_SET_NAME'])
         if not self.image_set_location.is_absolute():
             self.image_set_location = Path(self.base_directory, self.image_set_location)
-        self.metadata_file_name = Path(self.base_directory, self.image_set_location,
-                                       self.config['test']['METADATA_FILE_NAME'])
-        self.metadata_image_column = self.config['test']['METADATA_IMAGE_COLUMN']
-        self.metadata_transcription_column = self.config['test']['METADATA_TRANSCRIPTION_COLUMN']
+        self.metadata_file_name = Path(self.image_set_location, self.metadata_file_name)
         self.model_file = Path(self.base_directory, self.config['test']['MODEL_FILE'])
