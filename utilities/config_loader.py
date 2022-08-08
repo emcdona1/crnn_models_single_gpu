@@ -52,4 +52,3 @@ class TestConfiguration(HandwritingConfiguration):
         if not self.image_set_location.is_absolute():
             self.image_set_location = Path(self.base_directory, self.image_set_location)
         self.metadata_file_name = Path(self.image_set_location, self.metadata_file_name)
-        self.model_file = Path(self.base_directory, self.config['test']['MODEL_FILE'])
