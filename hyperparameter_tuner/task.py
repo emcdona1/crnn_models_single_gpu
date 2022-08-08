@@ -68,10 +68,11 @@ def run(run_dir, hparams: dict, dataset: TrainDataset):
 
 
 def tensorboard_grid_search():
+    log_folder_name = 'logs/hparam_tuning_grid'
     dataset = TrainDataset(c)
     dataset.create_dataset(4)
-    os.remove('logs/hparam_tuning_grid')
-    with tf.summary.create_file_writer('logs/hparam_tuning_grid').as_default():
+    os.remove(log_folder_name)
+    with tf.summary.create_file_writer(log_folder_name).as_default():
         hp.hparams_config(
             hparams=[HP_BATCH_SIZE, HP_KERNEL_SIZE, HP_NUM_DENSE_UNITS1,
                      HP_DROPOUT, HP_NUM_DENSE_LSTM1, HP_LEARNING_RATE],
@@ -96,7 +97,7 @@ def tensorboard_grid_search():
                             run_name = f'run-{session_num}'
                             print(f'--- Starting trial: {run_name}')
                             print({h.name: hparams[h] for h in hparams})
-                            run('logs/hparam_tuning/' + run_name, hparams, dataset)
+                            run(log_folder_name + run_name, hparams, dataset)
                             session_num += 1
 
 
@@ -176,9 +177,3 @@ if __name__ == "__main__":
         print(e)
         tf.keras.backend.clear_session()
         exit(0)
-
-    # View results in iPython:
-    # %load_ext tensorboard
-    # %tensorboard --logdir logs/hparam_tuning
-    # View results from console:
-    # tensorboard --logdir logs/hparam_tuning
