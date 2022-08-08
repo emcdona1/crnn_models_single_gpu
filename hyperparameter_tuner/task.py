@@ -30,27 +30,27 @@ best_accuracy = 0.0
 #     dim_kernel_size = Integer(low=3, high=5, name='kernel_size')
 #     dim_num_dense_units1 = Integer(low=128, high=512, name='num_dense_units1')
 #     dim_dropout = Real(low=0.1, high=0.5, name='dropout')
-#     dim_num_dense_ltsm1 = Integer(low=256, high=2048, name='num_dense_ltsm1')
-#     dim_num_dense_ltsm2 = Integer(low=256, high=2048, name='num_dense_ltsm1')
+#     dim_num_dense_lstm1 = Integer(low=256, high=2048, name='num_dense_lstm1')
+#     dim_num_dense_lstm2 = Integer(low=256, high=2048, name='num_dense_lstm1')
 #     dim_learning_rate = Real(low=0.0005, high=0.1,  prior='log-uniform',name='learning_rate')
 #     dimensions = [dim_batch_size, dim_kernel_size, dim_num_dense_units1, dim_dropout,
-#                   dim_num_dense_ltsm1, dim_num_dense_ltsm2, dim_learning_rate]
+#                   dim_num_dense_lstm1, dim_num_dense_lstm2, dim_learning_rate]
 #     gp_minimize(fit_new_model,
 #                 foo)
 #     search_result = gp_minimize(func=fit_new_model,
 #                                 dimensions=dimensions,
 #                                 acq_func='EI',  # Expected Improvement.
 #                                 n_calls=40
-
-
-def fit_new_model():
-    pass
+#
+#
+# def fit_new_model():
+#     pass
 
 
 def train_test_tensorboard(hparams: dict, dataset: TrainDataset):
     model = create_model(hparams[HP_KERNEL_SIZE], 'relu',
                          hparams[HP_NUM_DENSE_UNITS1], hparams[HP_DROPOUT],
-                         hparams[HP_NUM_DENSE_LTSM1], 1024, hparams[HP_LEARNING_RATE])
+                         hparams[HP_NUM_DENSE_LSTM1], 1024, hparams[HP_LEARNING_RATE])
     history = model.fit(dataset.train_dataset, validation_data=dataset.validation_dataset,
                         epochs=10,  # todo: change to epochs=c.NUM_EPOCHS after testing
                         callbacks=[TuneReportCallback({'mean_loss': 'val_loss'})])
@@ -73,7 +73,7 @@ def tensorboard_grid_search():
     with tf.summary.create_file_writer('logs/hparam_tuning_grid').as_default():
         hp.hparams_config(
             hparams=[HP_BATCH_SIZE, HP_KERNEL_SIZE, HP_NUM_DENSE_UNITS1,
-                     HP_DROPOUT, HP_NUM_DENSE_LTSM1, HP_LEARNING_RATE],
+                     HP_DROPOUT, HP_NUM_DENSE_LSTM1, HP_LEARNING_RATE],
             metrics=[hp.Metric(METRIC_VAL_LOSS, display_name='Validation Loss')]
         )
     session_num = 0
@@ -81,7 +81,7 @@ def tensorboard_grid_search():
         for kernel in HP_KERNEL_SIZE.domain.values:
             for dense_1 in HP_NUM_DENSE_UNITS1.domain.values:
                 for dropout in HP_DROPOUT.domain.values:
-                    for ltsm_1 in HP_NUM_DENSE_LTSM1.domain.values:
+                    for ltsm_1 in HP_NUM_DENSE_LSTM1.domain.values:
                         for lr in HP_LEARNING_RATE.domain.values:
                             dataset.update_batch_size(batch)
                             hparams = {
@@ -89,7 +89,7 @@ def tensorboard_grid_search():
                                 HP_KERNEL_SIZE: kernel,
                                 HP_NUM_DENSE_UNITS1: dense_1,
                                 HP_DROPOUT: dropout,
-                                HP_NUM_DENSE_LTSM1: ltsm_1,
+                                HP_NUM_DENSE_LSTM1: ltsm_1,
                                 HP_LEARNING_RATE: lr
                             }
                             run_name = f'run-{session_num}'
@@ -106,8 +106,8 @@ def train_ray(config, checkpoint_dir=None):
                          activation='relu',
                          num_units_dense1=config['num_dense_units1'],
                          dropout=config['dropout'],
-                         num_units_ltsm1=config['num_dense_ltsm1'],
-                         num_units_ltsm2=1024,
+                         num_units_lstm1=config['num_dense_lstm1'],
+                         num_units_lstm2=1024,
                          learning_rate=config['learning_rate'])
     checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         "model.h5", monitor='loss', save_best_only=True, save_freq=2)
@@ -135,7 +135,7 @@ def ray_hyperband_search():
             'kernel_size': tune.randint(3, 5),
             'num_dense_units1': tune.randint(128, 512),
             'dropout': tune.uniform(0.1, 0.5),
-            'num_dense_ltsm1': tune.randint(256, 2048),
+            'num_dense_lstm1': tune.randint(256, 2048),
             'learning_rate': tune.uniform(0.0005, 0.1)
         },
     )
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     HP_KERNEL_SIZE = hp.HParam('kernel_size', hp.Discrete([3]))  # 3, 4
     HP_NUM_DENSE_UNITS1 = hp.HParam('num_dense_units1', hp.Discrete([128, 256, 512]))
     HP_DROPOUT = hp.HParam('dropout', hp.Discrete([0.1, 0.2, 0.3, 0.4]))
-    HP_NUM_DENSE_LTSM1 = hp.HParam('num_dense_ltsm1', hp.Discrete([256, 512, 768, 1024]))
+    HP_NUM_DENSE_LSTM1 = hp.HParam('num_dense_lstm1', hp.Discrete([256, 512, 768, 1024]))
     HP_LEARNING_RATE = hp.HParam('learning_rate', hp.Discrete([0.0005, 0.005, 0.01, 0.05, 0.1]))
     METRIC_VAL_LOSS = 'val_loss'
 

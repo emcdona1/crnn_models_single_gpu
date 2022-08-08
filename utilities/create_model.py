@@ -25,7 +25,7 @@ class CTCLayer(keras.layers.Layer):
 
 
 def create_model(kernel_size: int, activation: str, num_units_dense1: int,
-                 dropout: float, num_units_ltsm1: int, num_units_ltsm2: int, learning_rate: float):
+                 dropout: float, num_units_lstm1: int, num_units_lstm2: int, learning_rate: float):
     """Defines and compiles model."""
     # Inputs to the model
     input_img = keras.layers.Input(shape=(400, 100, 1), name='image', dtype='float32')  # TODO: don't hardcode this
@@ -53,9 +53,9 @@ def create_model(kernel_size: int, activation: str, num_units_dense1: int,
     x = keras.layers.Dropout(dropout)(x)
 
     # RNNs
-    x = keras.layers.Bidirectional(keras.layers.LSTM(num_units_ltsm1, return_sequences=True, dropout=0.25,
+    x = keras.layers.Bidirectional(keras.layers.LSTM(num_units_lstm1, return_sequences=True, dropout=0.25,
                                                      name='bidirection_ltsm_1'))(x)
-    x = keras.layers.Bidirectional(keras.layers.LSTM(num_units_ltsm2, return_sequences=True, dropout=0.25,
+    x = keras.layers.Bidirectional(keras.layers.LSTM(num_units_lstm2, return_sequences=True, dropout=0.25,
                                                      name='bidirection_ltsm_2'))(x)
 
     # Output layer
