@@ -17,10 +17,10 @@ def main():
     data = TrainDataset(c)
     data.create_dataset(c.batch_size)
     retrained_model = retrain_model(base_model, data)
-    fine_tuned_model = fine_tune_model(retrained_model, data)
+    fine_tune_model(retrained_model, data)
 
 
-def retrain_model(model: keras.Model, data: TrainDataset):
+def retrain_model(model: keras.Model, data: TrainDataset) -> keras.Model:
     for i in range(len(model.layers)):
         model.layers[i].trainable = False
     model.layers[6].trainable = True
@@ -41,7 +41,7 @@ def retrain_model(model: keras.Model, data: TrainDataset):
     return model
 
 
-def fine_tune_model(model: keras.Model, data: TrainDataset):
+def fine_tune_model(model: keras.Model, data: TrainDataset) -> None:
     # Then, fine tune the model
     model.trainable = True
     model.compile(keras.optimizers.Adam(learning_rate=1e-5))
@@ -56,7 +56,6 @@ def fine_tune_model(model: keras.Model, data: TrainDataset):
     )
     prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=c.learning_rate))
     prediction_model.save(Path(save_folder, f'{NAME}-fine_tuned.h5'))
-    return model
 
 
 if __name__ == '__main__':
