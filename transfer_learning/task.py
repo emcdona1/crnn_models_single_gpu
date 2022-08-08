@@ -26,36 +26,29 @@ def retrain_model(model: keras.Model, data: TrainDataset) -> keras.Model:
     model.layers[6].trainable = True
     model.layers[-1].trainable = True
     model.compile(keras.optimizers.Adam(learning_rate=c.learning_rate))
-
     history: tf.keras.callbacks.History = model.fit(data.train_dataset,
-                                                    epochs=100,
+                                                    epochs=150,
                                                     validation_data=data.validation_dataset)
-
-    model.save(Path(save_folder, f'{NAME}-retrained-full_model.h5'))
-
-    prediction_model = tf.keras.models.Model(
-        model.get_layer(name='image').input, model.get_layer(name='dense_layer').output
-    )
-    prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=c.learning_rate))
-    prediction_model.save(Path(save_folder, f'{NAME}-retrained.h5'))
+    save_models(model, 'retrained')
     return model
 
 
 def fine_tune_model(model: keras.Model, data: TrainDataset) -> None:
-    # Then, fine tune the model
     model.trainable = True
     model.compile(keras.optimizers.Adam(learning_rate=1e-5))
     history_fine_tune: tf.keras.callbacks.History = model.fit(data.train_dataset,
                                                               epochs=100,
                                                               validation_data=data.validation_dataset)
+    save_models(model, 'fine_tuned')
 
-    model.save(Path(save_folder, f'{NAME}-fine_tuned-full_model.h5'))
 
+def save_models(model: keras.Model, name: str) -> None:
+    model.save(Path(save_folder, f'{NAME}-{name}-full_model.h5'))
     prediction_model = tf.keras.models.Model(
         model.get_layer(name='image').input, model.get_layer(name='dense_layer').output
     )
     prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=c.learning_rate))
-    prediction_model.save(Path(save_folder, f'{NAME}-fine_tuned.h5'))
+    prediction_model.save(Path(save_folder, f'{NAME}-{name}.h5'))
 
 
 if __name__ == '__main__':
