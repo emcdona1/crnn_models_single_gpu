@@ -1,35 +1,94 @@
-# Training & Tuning CRNN Handwriting Models on Google Cloud
+# Training & Tuning CRNN Handwriting Models on a local GPU server
 
 The code in this repository has been used to perform hyperparameter tuning, model training, and (not yet) model deployment within Google Cloud's infrastructure.
 
 This code is built on Python 3.7.13.
 
-## Google Cloud Platform account requirements
-* Billable Google Cloud account (hyperparameter tuning, especially, is expensive)
-* The following APIs enabled:
-	* Cloud Storage
-	* Vertex AI
-	* Artifact Registry
-	* (optional) GPU quota of >= 1 ([helpful tutorial](https://stackoverflow.com/questions/53415180/gcp-error-quota-gpus-all-regions-exceeded-limit-0-0-globally))
+## Pre-Requirements
+* Access to a server with Tensorflow-compatible GPUs, with all required NVIDIA/CUDA software installed. 
+(Executing `tf.config.list_physical_devices('GPU')` should return at least one GPU.)
+* Command-line access to the server (e.g. KiTTY, PuTTY).
+* FTP access to the server (e.g. WinSCP).
 
 -----
 
-## Google Cloud Platform environment setup
+## Suggested Workflow
 
-1. In Cloud Storage, upload your image set (create a bucket if necessary, e.g. `gs://fmnh_datasets/`).  Do this using the web UI, or using gsutil on your local machine (e.g. `gsutil -m cp -r <source_folder> gs://fmnh_datasets/<dataset_name>`). 
-3. In Vertex AI, navigate to Workbench --> Managed Notebooks, and click New Notebook near the top.
-4. Name your new notebook, make sure it's in the same Region as everything else, change Permission to "Service account," and under "Advanced" be sure to check "Enable terminal" (and anything else you want to change).
-5. In the meantime, go to Artifact Registry and create a repository for your Docker image, making sure it's in the same Region as everything else. Navigate inside this new repo and click "Setup Instructions" near the top.
-6. Copy the "Configure Docker" command.  (Something similar to `gcloud auth configure-docker us-central1-docker.pkg.dev`)
-7. Return to Vertex AI.  After a few minutes, you can click "Open Jupyer Lab" for the new notebook.
-8. Clone this repo into your notebook.  (using a Terminal window, e.g. `git clone https://github.com/emcdona1/handwriting_models_on_vertex_ai/`)
-2. Within your managed notebook, in a Terminal window, navigate to the repo folder. (e.g. 'cd handwriting_models_on_vertex_ai`).
-3. In the same Terminal window, paste and run your configure Docker command.
-9. Copy the image set (including metadata) into the workspace. (using a Terminal window, e.g. `gsutil -m cp -r gs://fmnh_datasets/IAM_Words ./`)
+Note: On a multi-GPU system, all of these scripts below select the one GPU with the most available
+capacity.  When no GPUs are detected, this will run on the CPU (e.g. for local testing).
 
 -----
 
-See modules for specific steps after setup.
+### 1. Hyperparameter Tuning
+
+Note: This is currently a full grid search, executed using TensorBoard.
+
+1. In the bottom `__main__` function of the code, modify the search values as desired.  Currently you can modify:
+   - Batch size
+   - Convolutional kernel size (square)
+   - Number of fully connected units in the first dense layer
+   - Dropout after the convolutional layers
+   - Number of units in the first LSTM layer.
+   - Learning rate.
+2. In the `setup.cfg` file, confirm the project parameters and 
+   NUM_EPOCHS and SEED (under 'train') are set as desired.
+3. Execute `task.py` from the main directory, e.g.:
+
+`python hyperparameter_tuner/task.py setup.cfg`
+
+4. The model saves run results in the `logs/hparam_tuning_grid` folder. 
+   (Note that this folder gets cleared out at the start of each run.)
+5. To view the results, you can execute `tensorboard --logdir logs/hparam_tuning_grid` in the console to view TensorBoard.
+
+-----
+
+### 2. Training A Tuned Model
+
+1. In the `setup.cfg` file, confirm the project and 
+   training parameters are set as desired.
+2. At the top of the `main()` method, set the parameters which were selected during hyperparameter tuning.
+3. Execute `task.py` from the main directory, e.g.:
+
+`python one_model_trainer/task.py setup.cfg example_model_name`
+
+4. The program saves 2 files to the `saved_models` folder: a `-full_model.h5` file 
+   which contains the complete model (including CTC layer), for further training, and a second model
+   (CTC layer removed) which can be used for predictions.
+
+-----
+
+### 3. Transfer Learning for Fine-tuning Model(s)
+
+1. In the `setup.cfg` file, confirm the project and 
+   training parameters are set as desired.
+2. At the top of the program, you can change `RETRAINING_EPOCHS` and `FINE_TUNING_EPOCHS`
+   as desired.
+3. Execute `task.py` from the main directory, e.g.:
+
+`python transfer_learning/task.py setup.cfg saved_models/prediction_model.h5 example_model_name`
+
+4. The program saves 4 files to the `saved_models` folder: two `-retrained.h5`
+   and two `-fine_tuned.h5` models (see "Training a Tuned Model" for explanation of the two models).
+
+-----
+
+### 4. Generating Predictions on the Test Set
+
+1. In the `setup.cfg` file, confirm the image set parameters are set as desired.
+2. Execute `task.py` from the main directory, with 1+ model files, e.g.:
+
+`python test_set_predictions/task.py setup.cfg saved_models/prediction_model.h5 saved_models/prediction_model_2.h5 ...`
+
+3. For each model file provided, the program saves 1 CSV file to the `test_set_predictions\predictions` folder,
+   containing the ground truth texts and the prediction text.
+
+-----
+
+### 5. Visualizing Performance
+
+Open `test_set_predictions/visulaize_predictions.ipynb` in a Jupyter environment.
+This notebook loads all prediction CSV files in the `predictions` folder, and generates
+statistics, summary statistics, and comparison graphs.
 
 -----
 
