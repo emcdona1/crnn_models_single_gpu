@@ -71,10 +71,15 @@ if __name__ == '__main__':
     if not save_folder.exists():
         os.makedirs(save_folder)
 
-    gpu = gpu_selection()
-    if gpu:
-        with tf.device(f'/device:GPU:{gpu}'):
-            print(f'Running on GPU {gpu}.')
+    try:
+        gpu = gpu_selection()
+        if gpu:
+            with tf.device(f'/device:GPU:{gpu}'):
+                print(f'Running on GPU {gpu}.')
+                main()
+        else:
             main()
-    else:
-        main()
+    except Exception as e:
+        print(e)
+        tf.keras.backend.clear_session()
+        exit(0)

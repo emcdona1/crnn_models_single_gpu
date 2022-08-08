@@ -68,10 +68,15 @@ if __name__ == '__main__':
     assert config_location.is_file(), f'{config_location} is not a file.'
     NAME = sys.argv[2]
 
-    gpu = gpu_selection()
-    if gpu:
-        with tf.device(f'/device:GPU:{gpu}'):
-            print(f'Running on GPU {gpu}.')
+    try:
+        gpu = gpu_selection()
+        if gpu:
+            with tf.device(f'/device:GPU:{gpu}'):
+                print(f'Running on GPU {gpu}.')
+                main()
+        else:
             main()
-    else:
-        main()
+    except Exception as e:
+        print(e)
+        tf.keras.backend.clear_session()
+        exit(0)
