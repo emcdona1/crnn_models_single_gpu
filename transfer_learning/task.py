@@ -12,6 +12,10 @@ from utilities import TrainDataset, TrainerConfiguration
 from utilities import gpu_selection, CTCLayer
 
 
+RETRAINING_EPOCHS = 150
+FINE_TUNING_EPOCHS = 125
+
+
 def main():
     base_model = keras.models.load_model(base_model_path, custom_objects={'CTCLayer': CTCLayer})
     data = TrainDataset(c)
@@ -27,7 +31,7 @@ def retrain_model(model: keras.Model, data: TrainDataset) -> keras.Model:
     model.layers[-1].trainable = True
     model.compile(keras.optimizers.Adam(learning_rate=c.learning_rate))
     history: tf.keras.callbacks.History = model.fit(data.train_dataset,
-                                                    epochs=150,
+                                                    epochs=RETRAINING_EPOCHS,
                                                     validation_data=data.validation_dataset)
     save_models(model, 'retrained')
     return model
@@ -37,7 +41,7 @@ def fine_tune_model(model: keras.Model, data: TrainDataset) -> None:
     model.trainable = True
     model.compile(keras.optimizers.Adam(learning_rate=1e-5))
     history_fine_tune: tf.keras.callbacks.History = model.fit(data.train_dataset,
-                                                              epochs=100,
+                                                              epochs=FINE_TUNING_EPOCHS,
                                                               validation_data=data.validation_dataset)
     save_models(model, 'fine_tuned')
 
