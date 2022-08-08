@@ -36,9 +36,10 @@ def main():
         prediction_results = prediction_results.append(new_results, ignore_index=True)
     print(prediction_results)
 
-    if not os.path.exists('predictions'):
-        os.makedirs('predictions')
-    prediction_results.to_csv(Path('predictions', f'{c.model_file.stem}-predictions.csv'))
+    save_folder = Path('./test_set_predictions/predictions')
+    if not os.path.exists(save_folder):
+        os.makedirs(save_folder)
+    prediction_results.to_csv(Path(save_folder, f'{c.model_file.stem}-predictions.csv'))
 
 
 if __name__ == '__main__':
