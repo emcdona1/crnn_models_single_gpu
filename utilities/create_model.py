@@ -1,12 +1,10 @@
-from pathlib import Path
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import layers
 
 
-class CTCLayer(layers.Layer):
-    def __init__(self, name=None):
-        super().__init__(name=name)
+class CTCLayer(keras.layers.Layer):
+    def __init__(self, name=None, **kwargs):
+        super().__init__(name=name, **kwargs)
         self.loss_fn = keras.backend.ctc_batch_cost
 
     def call(self, y_true, y_pred):
@@ -25,46 +23,49 @@ class CTCLayer(layers.Layer):
         # At test time, just return the computed predictions
         return y_pred
 
-CHAR_LIST: str = '\' !"#&()[]*+,-./0123456789:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
-characters = sorted(set(list(CHAR_LIST)))
-# Mapping characters to integers
-char_to_num = layers.experimental.preprocessing.StringLookup(
-vocabulary=list(characters), mask_token=None
-)
 
-def create_model(kernel_size: int, activation: str, num_units_dense1: int, dropout: float, num_units_ltsm1: int, num_units_ltsm2: int, learning_rate: float):
-    '''Defines and compiles model.'''
+def create_model(kernel_size: int, activation: str, num_units_dense1: int,
+                 dropout: float, num_units_lstm1: int, num_units_lstm2: int, learning_rate: float):
+    """Defines and compiles model."""
     # Inputs to the model
-    input_img = layers.Input(shape=(400, 100, 1), name='image', dtype='float32')  # TODO: don't hardcode this
-    labels = layers.Input(name='label', shape=(None,), dtype='float32')
+    input_img = keras.layers.Input(shape=(400, 100, 1), name='image', dtype='float32')  # TODO: don't hardcode this
+    labels = keras.layers.Input(name='label', shape=(None,), dtype='float32')
 
     # First conv block
-    x = layers.Conv2D(32, (kernel_size, kernel_size), activation=activation, 
-                      kernel_initializer='he_normal', padding='same', 
-                      name='Conv1')(input_img)
-    x = layers.MaxPooling2D((2, 2), name='pool1')(x)
+    x = keras.layers.Conv2D(32, (kernel_size, kernel_size), activation=activation,
+                            kernel_initializer='he_normal', padding='same',
+                            name='Conv1')(input_img)
+    x = keras.layers.MaxPooling2D((2, 2), name='pool1')(x)
 
     # Second conv block
-    x = layers.Conv2D(64, (kernel_size, kernel_size), activation=activation, 
-                      kernel_initializer='he_normal', padding='same', 
-                      name='Conv2')(x)
-    x = layers.MaxPooling2D((2, 2), name='pool2')(x)
+    x = keras.layers.Conv2D(64, (kernel_size, kernel_size), activation=activation,
+                            kernel_initializer='he_normal', padding='same',
+                            name='Conv2')(x)
+    x = keras.layers.MaxPooling2D((2, 2), name='pool2')(x)
 
     # We have used two max pool with pool size and strides 2.
     # Hence, downsampled feature maps are 4x smaller. The number of
     # filters in the last layer is 64. Reshape accordingly before
     # passing the output to the RNN part of the model
     new_shape = ((400 // 4), (100 // 4) * 64)
-    x = layers.Reshape(target_shape=new_shape, name='reshape')(x)
-    x = layers.Dense(num_units_dense1, activation=activation, name='dense1')(x)
-    x = layers.Dropout(dropout)(x)
+    x = keras.layers.Reshape(target_shape=new_shape, name='reshape')(x)
+    x = keras.layers.Dense(num_units_dense1, activation=activation, name='dense1')(x)
+    x = keras.layers.Dropout(dropout)(x)
 
     # RNNs
-    x = layers.Bidirectional(layers.LSTM(num_units_ltsm1, return_sequences=True, dropout=0.25, name='bidirection_ltsm_1'))(x)
-    x = layers.Bidirectional(layers.LSTM(num_units_ltsm2, return_sequences=True, dropout=0.25, name='bidirection_ltsm_1'))(x)
+    x = keras.layers.Bidirectional(keras.layers.LSTM(num_units_lstm1, return_sequences=True, dropout=0.25,
+                                                     name='bidirection_ltsm_1'))(x)
+    x = keras.layers.Bidirectional(keras.layers.LSTM(num_units_lstm2, return_sequences=True, dropout=0.25,
+                                                     name='bidirection_ltsm_2'))(x)
 
     # Output layer
-    x = layers.Dense(len(char_to_num.get_vocabulary()) + 1, activation='softmax', name='dense_layer')(x)
+    CHAR_LIST = '\' !"#&()[]*+,-./0123456789:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+    characters = sorted(set(list(CHAR_LIST)))
+    # Mapping characters to integers
+    char_to_num = keras.layers.experimental.preprocessing.StringLookup(
+        vocabulary=list(characters), mask_token=None
+    )
+    x = keras.layers.Dense(len(char_to_num.get_vocabulary()) + 1, activation='softmax', name='dense_layer')(x)
 
     # Add CTC layer for calculating CTC loss at each step
     output = CTCLayer(name='ctc_loss')(labels, x)

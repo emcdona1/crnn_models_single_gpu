@@ -1,85 +1,179 @@
 import sys
 import os
-root_dir = os.path.join(os.getcwd(), '..')
-sys.path.append(root_dir)
-
 from pathlib import Path
-from tensorflow.keras import layers
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # suppress INFO alerts about TF
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '1'  # suppress INFO alerts about oneDNN
+working_dir = os.path.join(os.getcwd())
+sys.path.append(working_dir)
+
 import tensorflow as tf
-import argparse
-import hypertune
-
-from utilities import create_model
-from utilities import TrainerConfiguration
+from ray import tune
+from ray.tune.schedulers import AsyncHyperBandScheduler
+from ray.tune.integration.keras import TuneReportCallback
+from tensorboard.plugins.hparams import api as hp
+# from skopt import gp_minimize
+# from skopt.space import Real, Integer
+# from skopt.utils import use_named_args
+from utilities import create_model, TrainerConfiguration
 from utilities import TrainDataset
+from utilities import gpu_selection
 
 
-def get_args():
-    '''Parses args. Must include all hyperparameters you want to tune.'''
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-      '--batch_size',
-      required=True,
-      type=int,
-      help='batch size')
-    parser.add_argument(
-      '--kernel_size',
-      required=True,
-      type=int,
-      help='size of kernel to use in convolutional layers (nxn square)')
-    parser.add_argument(
-      '--activation',
-      required=True,
-      type=str,
-      help='activation function to use')
-    parser.add_argument(
-      '--dropout',
-      required=True,
-      type=float,
-      help='amount of dropout in dropout layer')
-    parser.add_argument(
-      '--num_units_dense1',
-      required=True,
-      type=int,
-      help='number of units in 1st dense layer')
-    parser.add_argument(
-      '--num_units_lstm1',
-      required=True,
-      type=int,
-      help='number of units in 1st LSTM bidirectional layer')
-    parser.add_argument(
-      '--num_units_lstm2',
-      required=True,
-      type=int,
-      help='number of units in 2nd LSTM bidirectional layer')
-    parser.add_argument(
-      '--learning_rate',
-      required=True,
-      type=float,
-      help='learning rate')
-    args = parser.parse_args()
-    return args
+# global best_accuracy
+# best_accuracy = 0.0
+
+
+# todo yeah these aren't supposed to be together
+# @use_named_args(dimensions=dimensions)
+# def bayesian_search(hparam):
+#     dim_batch_size = Integer(low=32, high=256, name='batch_size')
+#     dim_kernel_size = Integer(low=3, high=5, name='kernel_size')
+#     dim_num_dense_units1 = Integer(low=128, high=512, name='num_dense_units1')
+#     dim_dropout = Real(low=0.1, high=0.5, name='dropout')
+#     dim_num_dense_lstm1 = Integer(low=256, high=2048, name='num_dense_lstm1')
+#     dim_num_dense_lstm2 = Integer(low=256, high=2048, name='num_dense_lstm1')
+#     dim_learning_rate = Real(low=0.0005, high=0.1,  prior='log-uniform',name='learning_rate')
+#     dimensions = [dim_batch_size, dim_kernel_size, dim_num_dense_units1, dim_dropout,
+#                   dim_num_dense_lstm1, dim_num_dense_lstm2, dim_learning_rate]
+#     gp_minimize(fit_new_model,
+#                 foo)
+#     search_result = gp_minimize(func=fit_new_model,
+#                                 dimensions=dimensions,
+#                                 acq_func='EI',  # Expected Improvement.
+#                                 n_calls=40
+#
+#
+# def fit_new_model():
+#     pass
+
+
+def train_test_tensorboard(hparams: dict, dataset: TrainDataset):
+    model = create_model(hparams[HP_KERNEL_SIZE], 'relu',
+                         hparams[HP_NUM_DENSE_UNITS1], hparams[HP_DROPOUT],
+                         hparams[HP_NUM_DENSE_LSTM1], 1024, hparams[HP_LEARNING_RATE])
+    history = model.fit(dataset.train_dataset, validation_data=dataset.validation_dataset,
+                        epochs=c.NUM_EPOCHS,
+                        callbacks=[TuneReportCallback({'mean_loss': 'val_loss'})])
+    # _, accuracy = model.evaluate(dataset.train_dataset, dataset.validation_dataset)
+    # return accuracy
+    tuning_metric = history.history['val_loss'][-1]
+    return tuning_metric
+
+
+def run(run_dir, hparams: dict, dataset: TrainDataset):
+    with tf.summary.create_file_writer(run_dir).as_default():
+        hp.hparams(hparams)  # record the values used in this trial
+        val_loss = train_test_tensorboard(hparams, dataset)
+        tf.summary.scalar(METRIC_VAL_LOSS, val_loss, step=1)
+
+
+def tensorboard_grid_search():
+    log_folder_name = 'logs/hparam_tuning_grid'
+    dataset = TrainDataset(c)
+    dataset.create_dataset(4)
+    os.remove(log_folder_name)
+    with tf.summary.create_file_writer(log_folder_name).as_default():
+        hp.hparams_config(
+            hparams=[HP_BATCH_SIZE, HP_KERNEL_SIZE, HP_NUM_DENSE_UNITS1,
+                     HP_DROPOUT, HP_NUM_DENSE_LSTM1, HP_LEARNING_RATE],
+            metrics=[hp.Metric(METRIC_VAL_LOSS, display_name='Validation Loss')]
+        )
+    session_num = 0
+    for batch in HP_BATCH_SIZE.domain.values:
+        for kernel in HP_KERNEL_SIZE.domain.values:
+            for dense_1 in HP_NUM_DENSE_UNITS1.domain.values:
+                for dropout in HP_DROPOUT.domain.values:
+                    for ltsm_1 in HP_NUM_DENSE_LSTM1.domain.values:
+                        for lr in HP_LEARNING_RATE.domain.values:
+                            dataset.update_batch_size(batch)
+                            hparams = {
+                                HP_BATCH_SIZE: batch,
+                                HP_KERNEL_SIZE: kernel,
+                                HP_NUM_DENSE_UNITS1: dense_1,
+                                HP_DROPOUT: dropout,
+                                HP_NUM_DENSE_LSTM1: ltsm_1,
+                                HP_LEARNING_RATE: lr
+                            }
+                            run_name = f'run-{session_num}'
+                            print(f'--- Starting trial: {run_name}')
+                            print({h.name: hparams[h] for h in hparams})
+                            run(log_folder_name + run_name, hparams, dataset)
+                            session_num += 1
+
+
+def train_ray(config, checkpoint_dir=None):
+    dataset = TrainDataset(config_location)
+    dataset.create_dataset(config['batch_size'])
+    model = create_model(kernel_size=config['kernel_size'],
+                         activation='relu',
+                         num_units_dense1=config['num_dense_units1'],
+                         dropout=config['dropout'],
+                         num_units_lstm1=config['num_dense_lstm1'],
+                         num_units_lstm2=1024,
+                         learning_rate=config['learning_rate'])
+    checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        "model.h5", monitor='loss', save_best_only=True, save_freq=2)
+    history = model.fit(dataset.train_dataset, validation_data=dataset.validation_dataset,
+                        epochs=15,
+                        verbose=0,
+                        callbacks=[checkpoint_callback, TuneReportCallback({'validation_loss': 'val_loss'})])
+    print(history)
+
+
+def ray_hyperband_search():
+    scheduler = AsyncHyperBandScheduler(time_attr='training_iteration', max_t=400, grace_period=20)
+    analysis = tune.run(
+        train_ray,
+        name='iam_train',
+        scheduler=scheduler,
+        metric='validation_loss',
+        mode='min',
+        stop={'training_iteration': 10},
+        num_samples=5,
+        resources_per_trial={'cpu': 1, 'gpu': 0.2},  # to use one GPU total, 'gpu' = 1 / num_samples
+        config={
+            'threads': 2,
+            'batch_size': tune.choice([32, 64, 158, 256]),
+            'kernel_size': tune.randint(3, 5),
+            'num_dense_units1': tune.randint(128, 512),
+            'dropout': tune.uniform(0.1, 0.5),
+            'num_dense_lstm1': tune.randint(256, 2048),
+            'learning_rate': tune.uniform(0.0005, 0.1)
+        },
+    )
+    print(f'Best hyperparameters found were: {analysis.best_config}')
 
 
 def main():
-    c = TrainerConfiguration()
-    tf.random.set_seed(c.SEED)
-    args = get_args()
-    dataset = TrainDataset()
-    dataset.create_dataset(args.batch_size)
-    model = create_model(args.kernel_size, args.activation, args.num_units_dense1, args.dropout, 
-                         args.num_units_lstm1, args.num_units_lstm2, args.learning_rate)
-    history = model.fit(dataset.train_dataset, epochs=c.NUM_EPOCHS, validation_data=dataset.validation_dataset)
-
-    # DEFINE METRIC
-    tuning_metric = history.history['val_loss'][-1]
-
-    hpt = hypertune.HyperTune()
-    hpt.report_hyperparameter_tuning_metric(
-        hyperparameter_metric_tag='val_loss',
-        metric_value=tuning_metric,
-        global_step=c.NUM_EPOCHS)
+    # ray_hyperband_search()
+    tensorboard_grid_search()
+    # bayesian_search()
 
 
 if __name__ == "__main__":
-    main()
+    assert len(sys.argv) >= 2, 'Please specify a config file.'
+    config_location = Path(sys.argv[1]).absolute()
+    assert config_location.is_file(), f'{config_location} is not a file.'
+    c = TrainerConfiguration(config_location)
+    tf.random.set_seed(c.seed)
+    METRIC_VAL_LOSS = 'val_loss'
+
+    HP_BATCH_SIZE = hp.HParam('batch_size', hp.Discrete([32, 128]))
+    HP_KERNEL_SIZE = hp.HParam('kernel_size', hp.Discrete([3]))  # 3, 4
+    HP_NUM_DENSE_UNITS1 = hp.HParam('num_dense_units1', hp.Discrete([128, 256, 512]))
+    HP_DROPOUT = hp.HParam('dropout', hp.Discrete([0.1, 0.2, 0.3, 0.4]))
+    HP_NUM_DENSE_LSTM1 = hp.HParam('num_dense_lstm1', hp.Discrete([256, 512, 768, 1024]))
+    HP_LEARNING_RATE = hp.HParam('learning_rate', hp.Discrete([0.0005, 0.005, 0.01, 0.05, 0.1]))
+
+    try:
+        gpu = gpu_selection()
+        if gpu:
+            with tf.device(f'/device:GPU:{gpu}'):
+                print(f'Running on GPU {gpu}.')
+                main()
+        else:
+            main()
+    except Exception as e:
+        print(e)
+        tf.keras.backend.clear_session()
+        exit(0)
