@@ -14,13 +14,13 @@ from tensorboard.plugins.hparams import api as hp
 # from skopt import gp_minimize
 # from skopt.space import Real, Integer
 # from skopt.utils import use_named_args
-from utilities import create_model
+from utilities import create_model, TrainerConfiguration
 from utilities import TrainDataset
 from utilities import gpu_selection
 
 
-global best_accuracy
-best_accuracy = 0.0
+# global best_accuracy
+# best_accuracy = 0.0
 
 
 # todo yeah these aren't supposed to be together
@@ -52,7 +52,7 @@ def train_test_tensorboard(hparams: dict, dataset: TrainDataset):
                          hparams[HP_NUM_DENSE_UNITS1], hparams[HP_DROPOUT],
                          hparams[HP_NUM_DENSE_LSTM1], 1024, hparams[HP_LEARNING_RATE])
     history = model.fit(dataset.train_dataset, validation_data=dataset.validation_dataset,
-                        epochs=10,  # todo: change to epochs=c.NUM_EPOCHS after testing
+                        epochs=c.NUM_EPOCHS,
                         callbacks=[TuneReportCallback({'mean_loss': 'val_loss'})])
     # _, accuracy = model.evaluate(dataset.train_dataset, dataset.validation_dataset)
     # return accuracy
@@ -68,8 +68,9 @@ def run(run_dir, hparams: dict, dataset: TrainDataset):
 
 
 def tensorboard_grid_search():
-    dataset = TrainDataset(config_location)
+    dataset = TrainDataset(c)
     dataset.create_dataset(4)
+    os.remove('logs/hparam_tuning_grid')
     with tf.summary.create_file_writer('logs/hparam_tuning_grid').as_default():
         hp.hparams_config(
             hparams=[HP_BATCH_SIZE, HP_KERNEL_SIZE, HP_NUM_DENSE_UNITS1,
@@ -152,6 +153,9 @@ if __name__ == "__main__":
     assert len(sys.argv) >= 2, 'Please specify a config file.'
     config_location = Path(sys.argv[1]).absolute()
     assert config_location.is_file(), f'{config_location} is not a file.'
+    c = TrainerConfiguration(config_location)
+    tf.random.set_seed(c.seed)
+    METRIC_VAL_LOSS = 'val_loss'
 
     HP_BATCH_SIZE = hp.HParam('batch_size', hp.Discrete([32, 128]))
     HP_KERNEL_SIZE = hp.HParam('kernel_size', hp.Discrete([3]))  # 3, 4
@@ -159,7 +163,6 @@ if __name__ == "__main__":
     HP_DROPOUT = hp.HParam('dropout', hp.Discrete([0.1, 0.2, 0.3, 0.4]))
     HP_NUM_DENSE_LSTM1 = hp.HParam('num_dense_lstm1', hp.Discrete([256, 512, 768, 1024]))
     HP_LEARNING_RATE = hp.HParam('learning_rate', hp.Discrete([0.0005, 0.005, 0.01, 0.05, 0.1]))
-    METRIC_VAL_LOSS = 'val_loss'
 
     try:
         gpu = gpu_selection()
