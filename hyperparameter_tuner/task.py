@@ -68,10 +68,11 @@ def run(run_dir, hparams: dict, dataset: TrainDataset):
 
 
 def tensorboard_grid_search():
-    log_folder_name = 'logs/hparam_tuning_grid'
     dataset = TrainDataset(c)
     dataset.create_dataset(4)
+    log_folder_name = 'logs/hparam_tuning_grid'
     os.remove(log_folder_name)
+    os.makedirs(log_folder_name)
     with tf.summary.create_file_writer(log_folder_name).as_default():
         hp.hparams_config(
             hparams=[HP_BATCH_SIZE, HP_KERNEL_SIZE, HP_NUM_DENSE_UNITS1,
