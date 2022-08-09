@@ -52,7 +52,7 @@ def train_test_tensorboard(hparams: dict, dataset: TrainDataset):
                          hparams[HP_NUM_DENSE_UNITS1], hparams[HP_DROPOUT],
                          hparams[HP_NUM_DENSE_LSTM1], 1024, hparams[HP_LEARNING_RATE])
     history = model.fit(dataset.train_dataset, validation_data=dataset.validation_dataset,
-                        epochs=c.NUM_EPOCHS,
+                        epochs=c.num_epochs,
                         callbacks=[TuneReportCallback({'mean_loss': 'val_loss'})])
     # _, accuracy = model.evaluate(dataset.train_dataset, dataset.validation_dataset)
     # return accuracy
