@@ -71,7 +71,8 @@ def tensorboard_grid_search():
     dataset = TrainDataset(c)
     dataset.create_dataset(4)
     log_folder_name = 'logs/hparam_tuning_grid'
-    os.removedirs(log_folder_name)
+    if Path(log_folder_name).exists():
+        os.removedirs(log_folder_name)
     os.makedirs(log_folder_name)
     with tf.summary.create_file_writer(log_folder_name).as_default():
         hp.hparams_config(
