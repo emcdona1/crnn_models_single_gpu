@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Union
 import tensorflow as tf
 from tensorflow import keras
-from .config_loader import HandwritingConfiguration, TrainerConfiguration, TestConfiguration
+from .configurations import HandwritingConfiguration, TrainerConfiguration, TestConfiguration
 from abc import ABC, abstractmethod
 
 
