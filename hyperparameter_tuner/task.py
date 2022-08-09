@@ -1,5 +1,7 @@
 import sys
 import os
+import shutil
+import traceback
 from pathlib import Path
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # suppress INFO alerts about TF
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '1'  # suppress INFO alerts about oneDNN
@@ -72,7 +74,7 @@ def tensorboard_grid_search():
     dataset.create_dataset(4)
     log_folder_name = 'logs/hparam_tuning_grid'
     if Path(log_folder_name).exists():
-        os.removedirs(log_folder_name)
+        shutil.rmtree(log_folder_name)
     with tf.summary.create_file_writer(log_folder_name).as_default():
         hp.hparams_config(
             hparams=[HP_BATCH_SIZE, HP_KERNEL_SIZE, HP_NUM_DENSE_UNITS1,
@@ -176,5 +178,6 @@ if __name__ == "__main__":
             main()
     except Exception as e:
         print(e)
+        print(traceback.format_exc())
         tf.keras.backend.clear_session()
         exit(0)
