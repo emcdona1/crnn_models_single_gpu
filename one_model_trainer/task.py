@@ -9,7 +9,7 @@ sys.path.append(working_dir)
 from pathlib import Path
 import tensorflow as tf
 import pandas as pd
-from utilities import create_model, CTCLayer
+from utilities import Model, CTCLayer
 from utilities import TrainDataset
 from utilities import gpu_selection
 
@@ -34,9 +34,10 @@ def main():
     dataset = TrainDataset(config_location)
     dataset.create_dataset(dataset.c.batch_size)
     tf.random.set_seed(dataset.c.seed)
-    model = create_model(kernel_size, activation_function, num_units_dense, dropout,
+    model = Model(dataset.c)
+    model.create_model(kernel_size, activation_function, num_units_dense, dropout,
                          num_units_ltsm1, num_units_ltsm2, learning_rate)
-    history = model.fit(dataset.train_dataset, epochs=dataset.c.num_epochs, validation_data=dataset.validation_dataset)
+    history = model.model.fit(dataset.train_dataset, epochs=dataset.c.num_epochs, validation_data=dataset.validation_dataset)
 
     results_folder = Path('saved_models')
     if not os.path.exists(results_folder):
@@ -48,12 +49,12 @@ def main():
 
     training_model_name = f'{NAME}-full_model'
     save_location = Path(results_folder, f'{training_model_name}.h5')
-    model.save(save_location)
+    model.model.save(save_location)
     print(f'Training model saved to: {save_location}')
 
     # create and save prediction model
     prediction_model = tf.keras.models.Model(
-        model.get_layer(name='image').input, model.get_layer(name='dense_layer').output
+        model.model.get_layer(name='image').input, model.model.get_layer(name='dense_layer').output
     )
     prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=learning_rate))
     prediction_model_name = f'{NAME}-prediction'
