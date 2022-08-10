@@ -1,10 +1,8 @@
 from pathlib import Path
 from typing import Union
-
 import tensorflow as tf
 from tensorflow import keras
-
-from utilities import TrainerConfiguration
+from .configurations import TrainerConfiguration
 
 
 class CTCLayer(keras.layers.Layer):
@@ -86,4 +84,4 @@ class Model:
         self.model = keras.models.Model(inputs=[input_img, labels], outputs=output, name='ocr_model_v1')
         # Compile the model and return
         self.model.compile(keras.optimizers.Adam(learning_rate=learning_rate))
-        print(model.summary())
+        print(self.model.summary())
