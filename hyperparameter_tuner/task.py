@@ -9,99 +9,35 @@ working_dir = os.path.join(os.getcwd())
 sys.path.append(working_dir)
 
 import tensorflow as tf
-from ray import tune
-from ray.tune.schedulers import AsyncHyperBandScheduler
-from ray.tune.integration.keras import TuneReportCallback
+# from ray import tune
+# from ray.tune.schedulers import AsyncHyperBandScheduler
+# from ray.tune.integration.keras import TuneReportCallback
 from tensorboard.plugins.hparams import api as hp
-# from skopt import gp_minimize
-# from skopt.space import Real, Integer
-# from skopt.utils import use_named_args
-from utilities import create_model, TrainerConfiguration
+from skopt import gp_minimize
+from skopt.space import Real, Integer
+from skopt.utils import use_named_args
+from utilities import Model, TrainerConfiguration
 from utilities import TrainDataset
 from utilities import gpu_selection
 
 
-# global best_accuracy
-# best_accuracy = 0.0
+dimensions = [Integer(low=32, high=256, name='batch_size'), Integer(low=3, high=5, name='kernel_size'),
+              Integer(low=128, high=512, name='num_dense_units1'), Real(low=0.1, high=0.5, name='dropout'),
+              Integer(low=256, high=2048, name='num_dense_lstm1'),
+              Integer(low=256, high=2048, name='num_dense_lstm2'),
+              Real(low=0.0005, high=0.1, prior='log-uniform', name='learning_rate')]
 
 
-# todo yeah these aren't supposed to be together
-# @use_named_args(dimensions=dimensions)
-# def bayesian_search(hparam):
-#     dim_batch_size = Integer(low=32, high=256, name='batch_size')
-#     dim_kernel_size = Integer(low=3, high=5, name='kernel_size')
-#     dim_num_dense_units1 = Integer(low=128, high=512, name='num_dense_units1')
-#     dim_dropout = Real(low=0.1, high=0.5, name='dropout')
-#     dim_num_dense_lstm1 = Integer(low=256, high=2048, name='num_dense_lstm1')
-#     dim_num_dense_lstm2 = Integer(low=256, high=2048, name='num_dense_lstm1')
-#     dim_learning_rate = Real(low=0.0005, high=0.1,  prior='log-uniform',name='learning_rate')
-#     dimensions = [dim_batch_size, dim_kernel_size, dim_num_dense_units1, dim_dropout,
-#                   dim_num_dense_lstm1, dim_num_dense_lstm2, dim_learning_rate]
-#     gp_minimize(fit_new_model,
-#                 foo)
-#     search_result = gp_minimize(func=fit_new_model,
-#                                 dimensions=dimensions,
-#                                 acq_func='EI',  # Expected Improvement.
-#                                 n_calls=40
-#
-#
-# def fit_new_model():
-#     pass
-
-
-def train_test_tensorboard(hparams: dict, dataset: TrainDataset):
-    model = create_model(hparams[HP_KERNEL_SIZE], 'relu',
-                         hparams[HP_NUM_DENSE_UNITS1], hparams[HP_DROPOUT],
-                         hparams[HP_NUM_DENSE_LSTM1], 1024, hparams[HP_LEARNING_RATE])
-    history = model.fit(dataset.train_dataset, validation_data=dataset.validation_dataset,
-                        epochs=c.num_epochs,
-                        callbacks=[TuneReportCallback({'mean_loss': 'val_loss'})])
-    # _, accuracy = model.evaluate(dataset.train_dataset, dataset.validation_dataset)
-    # return accuracy
-    tuning_metric = history.history['val_loss'][-1]
-    return tuning_metric
-
-
-def run(run_dir, hparams: dict, dataset: TrainDataset):
-    with tf.summary.create_file_writer(run_dir).as_default():
-        hp.hparams(hparams)  # record the values used in this trial
-        val_loss = train_test_tensorboard(hparams, dataset)
-        tf.summary.scalar(METRIC_VAL_LOSS, val_loss, step=1)
-
-
-def tensorboard_grid_search():
+def bayesian_search():
+    global dataset
     dataset = TrainDataset(c)
-    dataset.create_dataset(4)
-    log_folder_name = 'logs/hparam_tuning_grid'
-    if Path(log_folder_name).exists():
-        shutil.rmtree(log_folder_name)
-    with tf.summary.create_file_writer(log_folder_name).as_default():
-        hp.hparams_config(
-            hparams=[HP_BATCH_SIZE, HP_KERNEL_SIZE, HP_NUM_DENSE_UNITS1,
-                     HP_DROPOUT, HP_NUM_DENSE_LSTM1, HP_LEARNING_RATE],
-            metrics=[hp.Metric(METRIC_VAL_LOSS, display_name='Validation Loss')]
-        )
-    session_num = 0
-    for batch in HP_BATCH_SIZE.domain.values:
-        for kernel in HP_KERNEL_SIZE.domain.values:
-            for dense_1 in HP_NUM_DENSE_UNITS1.domain.values:
-                for dropout in HP_DROPOUT.domain.values:
-                    for ltsm_1 in HP_NUM_DENSE_LSTM1.domain.values:
-                        for lr in HP_LEARNING_RATE.domain.values:
-                            dataset.update_batch_size(batch)
-                            hparams = {
-                                HP_BATCH_SIZE: batch,
-                                HP_KERNEL_SIZE: kernel,
-                                HP_NUM_DENSE_UNITS1: dense_1,
-                                HP_DROPOUT: dropout,
-                                HP_NUM_DENSE_LSTM1: ltsm_1,
-                                HP_LEARNING_RATE: lr
-                            }
-                            run_name = f'run-{session_num}'
-                            print(f'--- Starting trial: {run_name}')
-                            print({h.name: hparams[h] for h in hparams})
-                            run(log_folder_name + run_name, hparams, dataset)
-                            session_num += 1
+    dataset.create_dataset(4, c.image_set_location, c.metadata_file_name)
+    search_result = gp_minimize(func=fit_new_model,
+                                dimensions=dimensions,
+                                acq_func='EI',  # Expected Improvement.
+                                n_calls=3,
+                                random_state=c.seed,
+                                n_random_starts=2)
 
 
 @use_named_args(dimensions=dimensions)
@@ -216,8 +152,8 @@ def fit_new_model(**params):
 
 def main():
     # ray_hyperband_search()
-    tensorboard_grid_search()
-    # bayesian_search()
+    # tensorboard_grid_search()
+    bayesian_search()
 
 
 if __name__ == "__main__":
@@ -228,12 +164,12 @@ if __name__ == "__main__":
     tf.random.set_seed(c.seed)
     METRIC_VAL_LOSS = 'val_loss'
 
-    HP_BATCH_SIZE = hp.HParam('batch_size', hp.Discrete([32, 128]))
-    HP_KERNEL_SIZE = hp.HParam('kernel_size', hp.Discrete([3]))  # 3, 4
-    HP_NUM_DENSE_UNITS1 = hp.HParam('num_dense_units1', hp.Discrete([128, 256, 512]))
-    HP_DROPOUT = hp.HParam('dropout', hp.Discrete([0.1, 0.2, 0.3, 0.4]))
-    HP_NUM_DENSE_LSTM1 = hp.HParam('num_dense_lstm1', hp.Discrete([256, 512, 768, 1024]))
-    HP_LEARNING_RATE = hp.HParam('learning_rate', hp.Discrete([0.0005, 0.005, 0.01, 0.05, 0.1]))
+    # HP_BATCH_SIZE = hp.HParam('batch_size', hp.Discrete([32, 128]))
+    # HP_KERNEL_SIZE = hp.HParam('kernel_size', hp.Discrete([3]))  # 3, 4
+    # HP_NUM_DENSE_UNITS1 = hp.HParam('num_dense_units1', hp.Discrete([128, 256, 512]))
+    # HP_DROPOUT = hp.HParam('dropout', hp.Discrete([0.1, 0.2, 0.3, 0.4]))
+    # HP_NUM_DENSE_LSTM1 = hp.HParam('num_dense_lstm1', hp.Discrete([256, 512, 768, 1024]))
+    # HP_LEARNING_RATE = hp.HParam('learning_rate', hp.Discrete([0.0005, 0.005, 0.01, 0.05, 0.1]))
 
     try:
         gpu = gpu_selection()
