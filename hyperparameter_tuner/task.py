@@ -23,25 +23,28 @@ import matplotlib.pyplot as plt
 
 
 global dataset
-global dimensions
 dimensions = [Integer(low=32, high=256, name='batch_size'), Integer(low=3, high=5, name='kernel_size'),
               Integer(low=128, high=512, name='num_dense_units1'), Real(low=0.1, high=0.5, name='dropout'),
               Integer(low=256, high=2048, name='num_dense_lstm1'),
               Integer(low=256, high=2048, name='num_dense_lstm2'),
               Real(low=0.0005, high=0.1, prior='log-uniform', name='learning_rate')]
+session_num = 0
+log_folder_name = Path('logs/hparam_tuning_bayes')
 
 
-def bayesian_search():
+def main():
     global dataset
     dataset = TrainDataset(c)
     dataset.create_dataset(4, c.image_set_location, c.metadata_file_name)
+    if Path(log_folder_name).exists():
+        shutil.rmtree(log_folder_name)
     global dimensions
     search_result: OptimizeResult = gp_minimize(func=fit_new_model,
                                                 dimensions=dimensions,
                                                 acq_func='EI',  # Expected Improvement
-                                                n_calls=3,
+                                                n_calls=20,
                                                 random_state=c.seed,
-                                                # n_random_starts=2
+                                                n_random_starts=3
                                                 )
     minima: list = search_result.x
     print(f'Lowest validation loss: {search_result.fun:.4f}')
@@ -62,15 +65,28 @@ def bayesian_search():
 def fit_new_model(**params):
     global dataset
     dataset.update_batch_size(params['batch_size'])
+    global session_num
     model = Model(c)
     model.create_model(params['kernel_size'], 'relu', params['num_dense_units1'], params['dropout'],
                        params['num_dense_lstm1'],
                        params['num_dense_lstm2'], params['learning_rate'])
+    global log_folder_name
+    log_name = f"{params['batch_size']}-{params['kernel_size']}-{params['num_dense_units1']}-{params['dropout']:0.4f}-" + \
+               f"{params['num_dense_lstm1']}-{params['num_dense_lstm2']}-{params['learning_rate']:.0e}"
+    tb_callback = tf.keras.callbacks.TensorBoard(
+        log_dir=Path(log_folder_name, log_name),
+        histogram_freq=0,
+        write_graph=True,
+        write_grads=False,
+        write_images=False
+    )
     history = model.model.fit(dataset.train_dataset, validation_data=dataset.validation_dataset,
                               epochs=c.num_epochs,
-                              # callbacks=[TuneReportCallback({'mean_loss': 'val_loss'})]
+                              callbacks=[tb_callback]
                               )
     tuning_metric = history.history['val_loss'][-1]
+    run_name = f'run-{session_num}'
+    session_num += 1
     return tuning_metric
 
 
