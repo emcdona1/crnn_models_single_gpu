@@ -3,6 +3,7 @@ import os
 import shutil
 import traceback
 from pathlib import Path
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # suppress INFO alerts about TF
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '1'  # suppress INFO alerts about oneDNN
 working_dir = os.path.join(os.getcwd())
@@ -39,17 +40,18 @@ def bayesian_search():
     dataset.create_dataset(4, c.image_set_location, c.metadata_file_name)
     global dimensions
     search_result: OptimizeResult = gp_minimize(func=fit_new_model,
-                                dimensions=dimensions,
-                                acq_func='EI',  # Expected Improvement
-                                n_calls=3,
-                                random_state=c.seed,
-                                n_random_starts=2)
+                                                dimensions=dimensions,
+                                                acq_func='EI',  # Expected Improvement
+                                                n_calls=3,
+                                                random_state=c.seed,
+                                                # n_random_starts=2
+                                                )
     minima: list = search_result.x
     print(f'Lowest validation loss: {search_result.fun:.4f}')
     print(f'''Best values found:
     - batch_size: {minima[0]}
     - kernel_size: {minima[1]},
-    = num_dense_units1: {minima[2]},
+    - num_dense_units1: {minima[2]},
     - dropout: {minima[3]},
     - num_dense_lstm1: {minima[4]},
     - num_dense_lstm2: {minima[5]},
@@ -64,12 +66,13 @@ def fit_new_model(**params):
     global dataset
     dataset.update_batch_size(params['batch_size'])
     model = Model(c)
-    model.create_model(params['kernel_size'], 'relu', params['num_dense_units1'], params['dropout'], params['num_dense_lstm1'],
-                  params['num_dense_lstm2'], params['learning_rate'])
+    model.create_model(params['kernel_size'], 'relu', params['num_dense_units1'], params['dropout'],
+                       params['num_dense_lstm1'],
+                       params['num_dense_lstm2'], params['learning_rate'])
     history = model.model.fit(dataset.train_dataset, validation_data=dataset.validation_dataset,
-                            epochs=c.num_epochs,
-                            # callbacks=[TuneReportCallback({'mean_loss': 'val_loss'})]
-    )
+                              epochs=c.num_epochs,
+                              # callbacks=[TuneReportCallback({'mean_loss': 'val_loss'})]
+                              )
     tuning_metric = history.history['val_loss'][-1]
     return tuning_metric
 
