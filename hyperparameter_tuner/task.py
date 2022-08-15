@@ -45,6 +45,16 @@ def main():
                                                 random_state=c.seed,
                                                 n_random_starts=3
                                                 )
+    minima: list = search_result.x
+    print(f'Lowest validation loss: {search_result.fun:.4f}')
+    print(f'''Best values found:
+    - batch_size: {minima[0]}
+    - kernel_size: {minima[1]},
+    - num_dense_units1: {minima[2]},
+    - dropout: {minima[3]},
+    - num_dense_lstm1: {minima[4]},
+    - num_dense_lstm2: {minima[5]},
+    - learning_rate: {minima[6]}''')
     save_file_name = 'tuner_search_result.pkl'
     with open(Path(log_folder_name, save_file_name), 'wb') as f:
         pickle.dump(search_result, f)
