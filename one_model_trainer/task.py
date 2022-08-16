@@ -9,35 +9,26 @@ sys.path.append(working_dir)
 from pathlib import Path
 import tensorflow as tf
 import pandas as pd
-from utilities import Model, CTCLayer
+from utilities import Model
 from utilities import TrainDataset
 from utilities import gpu_selection
+from arguments import ModelArguments
 
 
 def main():
-    ###################################################################
-    # SET ALL THE HYPERPARAMETERS HERE, WHICH WERE DETERMINED IN TUNING
-    kernel_size = 4
-    activation_function = 'relu'
-    learning_rate = 0.001
-    num_units_dense = 256
-    num_units_ltsm2 = 1024
-    ###################################################################
-    # run 55 parameters
-    dropout = 0.12489316869910207
-    num_units_ltsm1 = 512
-    # run 41 parameters
-    # dropout = 0.1
-    # num_units_ltsm1 = 768
-    ###################################################################
-
-    dataset = TrainDataset(config_location)
-    dataset.create_dataset(dataset.c.batch_size)
+    dataset = TrainDataset(arg.config_location)
+    dataset.create_dataset(arg.batch_size if arg.batch_size else dataset.c.batch_size)
     tf.random.set_seed(dataset.c.seed)
     model = Model(dataset.c)
-    model.create_model(kernel_size, activation_function, num_units_dense, dropout,
-                         num_units_ltsm1, num_units_ltsm2, learning_rate)
-    history = model.model.fit(dataset.train_dataset, epochs=dataset.c.num_epochs, validation_data=dataset.validation_dataset)
+    model.create_model(arg.kernel_size,
+                       arg.activation,
+                       arg.num_units_dense,
+                       arg.dropout,
+                       arg.num_units_lstm1,
+                       arg.num_units_lstm2,
+                       arg.lr if arg.lr else dataset.c.learning_rate)
+    history = model.model.fit(dataset.train_dataset, epochs=dataset.c.num_epochs,
+                              validation_data=dataset.validation_dataset)
 
     results_folder = Path('saved_models')
     if not os.path.exists(results_folder):
@@ -56,19 +47,16 @@ def main():
     prediction_model = tf.keras.models.Model(
         model.model.get_layer(name='image').input, model.model.get_layer(name='dense_layer').output
     )
-    prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=learning_rate))
+    prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=arg.lr if arg.lr else dataset.c.learning_rate))
     prediction_model_name = f'{NAME}-prediction'
     save_location = Path(results_folder, f'{prediction_model_name}.h5')
     prediction_model.save(save_location)
     print(f'Prediction model saved to: {save_location}')
 
-    
-if __name__ == '__main__':
-    assert len(sys.argv) == 3, 'Please specify a config file & a training run name.'
-    config_location = Path(sys.argv[1]).absolute()
-    assert config_location.is_file(), f'{config_location} is not a file.'
-    NAME = sys.argv[2]
 
+if __name__ == '__main__':
+    arg = ModelArguments()
+    NAME = arg.run_name
     try:
         gpu = gpu_selection()
         if gpu:
