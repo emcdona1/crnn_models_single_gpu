@@ -13,13 +13,13 @@ import tensorflow as tf
 from ray import tune
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.integration.keras import TuneReportCallback
-from utilities import Model, TrainerConfiguration
+from utilities import Model, TunerConfiguration
 from utilities import TrainDataset
 from utilities import gpu_selection
 
 
 def train_ray(config, checkpoint_dir=None):
-    dataset = TrainDataset(config_location)
+    dataset = TrainDataset(c)
     dataset.create_dataset(config['batch_size'])
     model = Model(c)
     model.create_model(kernel_size=config['kernel_size'],
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     assert len(sys.argv) >= 2, 'Please specify a config file.'
     config_location = Path(sys.argv[1]).absolute()
     assert config_location.is_file(), f'{config_location} is not a file.'
-    c = TrainerConfiguration(config_location)
+    c = TunerConfiguration(config_location)
     tf.random.set_seed(c.seed)
 
     try:

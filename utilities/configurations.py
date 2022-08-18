@@ -32,6 +32,15 @@ class HandwritingConfiguration(ABC):
         )
 
 
+class TunerConfiguration(HandwritingConfiguration):
+    def __init__(self, config_file_location: Union[Path, str]):
+        super().__init__(config_file_location)
+        self.num_epochs = self.config.getint('tune', 'NUM_EPOCHS')
+        self.num_calls = self.config.getint('tune', 'NUM_CALLS')
+        self.num_random_starts = self.config.getint('tune', 'NUM_RANDOM_STARTS')
+        self.seed = self.config.getint('train', 'SEED')
+
+
 class TrainerConfiguration(HandwritingConfiguration):
     def __init__(self, config_file_location: Union[Path, str]):
         super().__init__(config_file_location)

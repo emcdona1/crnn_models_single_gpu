@@ -11,7 +11,7 @@ sys.path.append(working_dir)
 
 import tensorflow as tf
 from tensorboard.plugins.hparams import api as hp
-from utilities import Model, TrainerConfiguration
+from utilities import Model, TunerConfiguration
 from utilities import TrainDataset
 from utilities import gpu_selection
 
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     assert len(sys.argv) >= 2, 'Please specify a config file.'
     config_location = Path(sys.argv[1]).absolute()
     assert config_location.is_file(), f'{config_location} is not a file.'
-    c = TrainerConfiguration(config_location)
+    c = TunerConfiguration(config_location)
     tf.random.set_seed(c.seed)
     METRIC_VAL_LOSS = 'val_loss'
 
