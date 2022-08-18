@@ -14,7 +14,7 @@ import tensorflow as tf
 from skopt import gp_minimize
 from skopt.space import Real, Integer
 from skopt.utils import use_named_args
-from utilities import Model, TrainerConfiguration
+from utilities import Model, TunerConfiguration
 from utilities import TrainDataset
 from utilities import gpu_selection
 from scipy.optimize import OptimizeResult
@@ -41,9 +41,9 @@ def main():
     search_result: OptimizeResult = gp_minimize(func=fit_new_model,
                                                 dimensions=dimensions,
                                                 acq_func='EI',  # Expected Improvement
-                                                n_calls=20,
+                                                n_calls=c.num_calls,
                                                 random_state=c.seed,
-                                                n_random_starts=3
+                                                n_random_starts=c.num_random_starts
                                                 )
     minima: list = search_result.x
     print(f'Lowest validation loss: {search_result.fun:.4f}')
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     assert len(sys.argv) >= 2, 'Please specify a config file.'
     config_location = Path(sys.argv[1]).absolute()
     assert config_location.is_file(), f'{config_location} is not a file.'
-    c = TrainerConfiguration(config_location)
+    c = TunerConfiguration(config_location)
     tf.random.set_seed(c.seed)
 
     try:
