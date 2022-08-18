@@ -23,18 +23,18 @@ def train_ray(config, checkpoint_dir=None):
     dataset.create_dataset(config['batch_size'])
     model = Model(c)
     model.create_model(kernel_size=config['kernel_size'],
-                         activation='relu',
-                         num_units_dense1=config['num_dense_units1'],
-                         dropout=config['dropout'],
-                         num_units_lstm1=config['num_dense_lstm1'],
-                         num_units_lstm2=1024,
-                         learning_rate=config['learning_rate'])
+                       activation='relu',
+                       num_units_dense1=config['num_dense_units1'],
+                       dropout=config['dropout'],
+                       num_units_lstm1=config['num_dense_lstm1'],
+                       num_units_lstm2=1024,
+                       learning_rate=config['learning_rate'])
     checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         "model.h5", monitor='loss', save_best_only=True, save_freq=2)
     history = model.model.fit(dataset.train_dataset, validation_data=dataset.validation_dataset,
-                        epochs=15,
-                        verbose=0,
-                        callbacks=[checkpoint_callback, TuneReportCallback({'validation_loss': 'val_loss'})])
+                              epochs=15,
+                              verbose=0,
+                              callbacks=[checkpoint_callback, TuneReportCallback({'validation_loss': 'val_loss'})])
     print(history)
 
 

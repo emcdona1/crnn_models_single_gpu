@@ -19,10 +19,10 @@ from utilities import gpu_selection
 def train_test_tensorboard(hparams: dict, dataset: TrainDataset):
     model = Model(c)
     model.create_model(hparams[HP_KERNEL_SIZE], 'relu',
-                         hparams[HP_NUM_DENSE_UNITS1], hparams[HP_DROPOUT],
-                         hparams[HP_NUM_DENSE_LSTM1], 1024, hparams[HP_LEARNING_RATE])
+                       hparams[HP_NUM_DENSE_UNITS1], hparams[HP_DROPOUT],
+                       hparams[HP_NUM_DENSE_LSTM1], 1024, hparams[HP_LEARNING_RATE])
     history = model.model.fit(dataset.train_dataset, validation_data=dataset.validation_dataset,
-                        epochs=c.num_epochs)
+                              epochs=c.num_epochs)
     # _, accuracy = model.model.evaluate(dataset.train_dataset, dataset.validation_dataset)
     # return accuracy
     tuning_metric = history.history['val_loss'][-1]
