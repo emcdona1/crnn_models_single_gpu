@@ -11,11 +11,12 @@ import tensorflow as tf
 import pandas as pd
 from utilities import Model
 from utilities import TrainDataset, TrainerConfiguration
-from utilities import gpu_selection
+from utilities import gpu_selection, LossChart
 from arguments import ModelArguments
 
 
 def main():
+    loss = LossChart()
     c = TrainerConfiguration(arg.config_location)
     dataset = TrainDataset(c)
     dataset.create_dataset(arg.batch_size if arg.batch_size else c.batch_size)
@@ -30,7 +31,7 @@ def main():
                        arg.lr if arg.lr else c.learning_rate)
     history = model.model.fit(dataset.train_dataset, epochs=c.num_epochs,
                               validation_data=dataset.validation_dataset)
-
+    loss.create_chart(history)
     results_folder = Path('saved_models')
     if not os.path.exists(results_folder):
         os.makedirs(results_folder)
