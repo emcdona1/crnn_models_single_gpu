@@ -10,26 +10,28 @@ from pathlib import Path
 import tensorflow as tf
 import pandas as pd
 from utilities import Model
-from utilities import TrainDataset
-from utilities import gpu_selection
+from utilities import TrainDataset, TrainerConfiguration
+from utilities import gpu_selection, LossChart
 from arguments import ModelArguments
 
 
 def main():
-    dataset = TrainDataset(arg.config_location)
-    dataset.create_dataset(arg.batch_size if arg.batch_size else dataset.c.batch_size)
-    tf.random.set_seed(dataset.c.seed)
-    model = Model(dataset.c)
+    loss = LossChart()
+    c = TrainerConfiguration(arg.config_location)
+    dataset = TrainDataset(c)
+    dataset.create_dataset(arg.batch_size if arg.batch_size else c.batch_size)
+    tf.random.set_seed(c.seed)
+    model = Model(c)
     model.create_model(arg.kernel_size,
                        arg.activation,
                        arg.num_units_dense,
                        arg.dropout,
                        arg.num_units_lstm1,
                        arg.num_units_lstm2,
-                       arg.lr if arg.lr else dataset.c.learning_rate)
-    history = model.model.fit(dataset.train_dataset, epochs=dataset.c.num_epochs,
+                       arg.lr if arg.lr else c.learning_rate)
+    history = model.model.fit(dataset.train_dataset, epochs=c.num_epochs,
                               validation_data=dataset.validation_dataset)
-
+    loss.create_chart(history)
     results_folder = Path('saved_models')
     if not os.path.exists(results_folder):
         os.makedirs(results_folder)
@@ -47,7 +49,7 @@ def main():
     prediction_model = tf.keras.models.Model(
         model.model.get_layer(name='image').input, model.model.get_layer(name='dense_layer').output
     )
-    prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=arg.lr if arg.lr else dataset.c.learning_rate))
+    prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=arg.lr if arg.lr else c.learning_rate))
     prediction_model_name = f'{NAME}-prediction'
     save_location = Path(results_folder, f'{prediction_model_name}.h5')
     prediction_model.save(save_location)

@@ -32,6 +32,20 @@ class HandwritingConfiguration(ABC):
         )
 
 
+class TunerConfiguration(HandwritingConfiguration):
+    def __init__(self, config_file_location: Union[Path, str]):
+        super().__init__(config_file_location)
+        self.num_epochs = self.config.getint('tune', 'NUM_EPOCHS')
+        self.num_calls = self.config.getint('tune', 'NUM_CALLS')
+        self.num_random_starts = self.config.getint('tune', 'NUM_RANDOM_STARTS')
+        self.seed = self.config.getint('train', 'SEED')
+
+        self.image_set_location = Path(self.config['tune']['IMAGE_SET_NAME'])
+        if not self.image_set_location.is_absolute():
+            self.image_set_location = Path(self.base_directory, self.image_set_location)
+        self.metadata_file_name = Path(self.image_set_location, self.metadata_file_name)
+
+
 class TrainerConfiguration(HandwritingConfiguration):
     def __init__(self, config_file_location: Union[Path, str]):
         super().__init__(config_file_location)
@@ -48,6 +62,7 @@ class TrainerConfiguration(HandwritingConfiguration):
 class TestConfiguration(HandwritingConfiguration):
     def __init__(self, config_file_location: Union[Path, str]):
         super().__init__(config_file_location)
+
         self.image_set_location = Path(self.config['test']['IMAGE_SET_NAME'])
         if not self.image_set_location.is_absolute():
             self.image_set_location = Path(self.base_directory, self.image_set_location)

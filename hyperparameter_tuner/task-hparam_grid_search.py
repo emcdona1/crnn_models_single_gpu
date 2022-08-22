@@ -11,7 +11,7 @@ sys.path.append(working_dir)
 
 import tensorflow as tf
 from tensorboard.plugins.hparams import api as hp
-from utilities import Model, TrainerConfiguration
+from utilities import Model, TunerConfiguration
 from utilities import TrainDataset
 from utilities import gpu_selection
 
@@ -19,10 +19,10 @@ from utilities import gpu_selection
 def train_test_tensorboard(hparams: dict, dataset: TrainDataset):
     model = Model(c)
     model.create_model(hparams[HP_KERNEL_SIZE], 'relu',
-                         hparams[HP_NUM_DENSE_UNITS1], hparams[HP_DROPOUT],
-                         hparams[HP_NUM_DENSE_LSTM1], 1024, hparams[HP_LEARNING_RATE])
+                       hparams[HP_NUM_DENSE_UNITS1], hparams[HP_DROPOUT],
+                       hparams[HP_NUM_DENSE_LSTM1], 1024, hparams[HP_LEARNING_RATE])
     history = model.model.fit(dataset.train_dataset, validation_data=dataset.validation_dataset,
-                        epochs=c.num_epochs)
+                              epochs=c.num_epochs)
     # _, accuracy = model.model.evaluate(dataset.train_dataset, dataset.validation_dataset)
     # return accuracy
     tuning_metric = history.history['val_loss'][-1]
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     assert len(sys.argv) >= 2, 'Please specify a config file.'
     config_location = Path(sys.argv[1]).absolute()
     assert config_location.is_file(), f'{config_location} is not a file.'
-    c = TrainerConfiguration(config_location)
+    c = TunerConfiguration(config_location)
     tf.random.set_seed(c.seed)
     METRIC_VAL_LOSS = 'val_loss'
 

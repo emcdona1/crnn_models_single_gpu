@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Union
 import tensorflow as tf
 from tensorflow import keras
-from .configurations import TrainerConfiguration, TestConfiguration
+from .configurations import TunerConfiguration, TrainerConfiguration, TestConfiguration
 from abc import ABC, abstractmethod
 
 
@@ -82,11 +82,9 @@ class HandwritingDataset(ABC):
 
 
 class TrainDataset(HandwritingDataset):
-    def __init__(self, configuration: Union[Path, str, TrainerConfiguration]):
+    def __init__(self, configuration: Union[TrainerConfiguration, TunerConfiguration]):
         super().__init__()
-        self.c = configuration \
-            if isinstance(configuration, TrainerConfiguration) \
-            else TrainerConfiguration(configuration)
+        self.c = configuration
         self.train_dataset = None
         self.validation_dataset = None
         self.images_train = None

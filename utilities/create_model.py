@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Union
 import tensorflow as tf
 from tensorflow import keras
-from .configurations import TrainerConfiguration
+from .configurations import TrainerConfiguration, TunerConfiguration
 
 
 class CTCLayer(keras.layers.Layer):
@@ -28,10 +28,8 @@ class CTCLayer(keras.layers.Layer):
 
 
 class Model:
-    def __init__(self, configuration: Union[Path, str, TrainerConfiguration]):
-        self.c = configuration \
-            if isinstance(configuration, TrainerConfiguration) \
-            else TrainerConfiguration(configuration)
+    def __init__(self, configuration: Union[TrainerConfiguration, TunerConfiguration]):
+        self.c = configuration
         self.model = None
 
     def create_model(self, kernel_size: int, activation: str, num_units_dense1: int,
