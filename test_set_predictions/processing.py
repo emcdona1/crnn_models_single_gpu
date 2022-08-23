@@ -6,6 +6,7 @@ from fuzzywuzzy import fuzz
 from nltk.metrics import distance
 import string
 from scipy import stats
+from difflib import Differ
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -134,3 +135,46 @@ def plot_close_matches(models: list, results: pd.DataFrame, summary_results: pd.
     graph.set_xticklabels([label[1] for label in models], rotation=15, horizontalalignment='right')
     graph.set_ybound(0, 0.2)
     graph.legend()
+
+
+def process_oboes(models: list, results: pd.DataFrame) -> (list, dict, dict, dict):
+    d = Differ()
+    substitution_errors = {}
+    deletion_errors = {}
+    insertion_errors = {}
+    CHAR_LIST = '\' !"#&()[]*+,-./0123456789:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+    empty_char_dict = {c: 0 for c in list(CHAR_LIST)}
+    plain_model_labels = ['-'.join(a[1].split('-')[:-1]) for a in models]
+
+    for ground_truth_label, model_label in models:
+        model_label_plain = '-'.join(model_label.split('-')[:-1])
+        oboe = results[results[f'{model_label}-edit_distance'] == 1][[ground_truth_label, model_label]]
+        subs = {}
+        dels = empty_char_dict.copy()
+        ins = empty_char_dict.copy()
+
+        for idx, row in oboe.iterrows():
+            differ_result = list(d.compare(row[ground_truth_label], row[model_label]))
+            differ_result = [a for a in differ_result if a[0] != ' ']
+            assert len(differ_result) <= 2, f'Lens are wrong: {differ_result}'
+            removed = [c[2] for c in differ_result if c[0] == '-']
+            added = [c[2] for c in differ_result if c[0] == '+']
+            if len(removed) == 0:
+                ins[added[0]] += 1
+            elif len(added) == 0:
+                dels[removed[0]] += 1
+            else:
+                sub_chars = (removed[0], added[0])
+                if sub_chars in subs.keys():
+                    subs[sub_chars] += 1
+                else:
+                    subs[sub_chars] = 1
+
+        subs = dict(sorted(subs.items(), key=lambda item: item[1], reverse=True))
+        dels = dict(sorted(dels.items(), key=lambda item: item[1], reverse=True))
+        ins = dict(sorted(ins.items(), key=lambda item: item[1], reverse=True))
+        substitution_errors[model_label_plain] = subs
+        deletion_errors[model_label_plain] = dels
+        insertion_errors[model_label_plain] = ins
+
+    return plain_model_labels, substitution_errors, deletion_errors, insertion_errors
