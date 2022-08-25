@@ -46,13 +46,15 @@ def fine_tune_model(model: keras.Model, data: TrainDataset) -> None:
     save_models(model, 'fine_tuned')
 
 
-def save_models(model: keras.Model, name: str) -> None:
-    model.save(Path(save_folder, f'{NAME}-{name}-full_model.h5'))
+def save_models(model: keras.Model, model_type: str) -> None:
+    model.save(Path(save_folder, f'{PROJECT_NAME}-{model_type}-full_model.h5'))
+    print(f'Model saved at: {str(Path(save_folder, f"{PROJECT_NAME}-{model_type}-full_model.h5"))}')
     prediction_model = tf.keras.models.Model(
         model.get_layer(name='image').input, model.get_layer(name='dense_layer').output
     )
     prediction_model.compile(tf.keras.optimizers.Adam(learning_rate=c.learning_rate))
-    prediction_model.save(Path(save_folder, f'{NAME}-{name}.h5'))
+    prediction_model.save(Path(save_folder, f'{PROJECT_NAME}-{model_type}.h5'))
+    print(f'Model saved at: {str(Path(save_folder, f"{PROJECT_NAME}-{model_type}.h5"))}\n')
 
 
 if __name__ == '__main__':
@@ -61,7 +63,7 @@ if __name__ == '__main__':
     c = TrainerConfiguration(Path(sys.argv[1]))
     base_model_path = Path(sys.argv[2])
     assert base_model_path.absolute().exists(), f'{base_model_path} is not a valid path.'
-    NAME = sys.argv[3]
+    PROJECT_NAME = sys.argv[3]
 
     save_folder = Path('./saved_models')
     if not save_folder.exists():
