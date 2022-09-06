@@ -4,20 +4,20 @@ import shutil
 import traceback
 from pathlib import Path
 import pickle
+import tensorflow as tf
+from skopt import gp_minimize
+from skopt.space import Real, Integer
+from skopt.utils import use_named_args
+from scipy.optimize import OptimizeResult
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # suppress INFO alerts about TF
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '1'  # suppress INFO alerts about oneDNN
 working_dir = os.path.join(os.getcwd())
 sys.path.append(working_dir)
 
-import tensorflow as tf
-from skopt import gp_minimize
-from skopt.space import Real, Integer
-from skopt.utils import use_named_args
 from utilities import Model, TunerConfiguration
 from utilities import TrainDataset
 from utilities import gpu_selection
-from scipy.optimize import OptimizeResult
 
 
 global dataset
