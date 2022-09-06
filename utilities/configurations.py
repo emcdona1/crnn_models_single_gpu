@@ -13,7 +13,7 @@ class HandwritingConfiguration(ABC):
         self.base_directory = config_file_location.absolute().parent
         self.image_format = self.config['project']['IMAGE_FORMAT']
         self.max_label_length = self.config.getint('project', 'MAX_LABEL_LENGTH')
-        self.batch_size = self.config.getint('project', 'BATCH_SIZE')
+        self.batch_size = 128
         self.img_height = self.config.getint('project', 'IMG_HEIGHT')
         self.img_width = self.config.getint('project', 'IMG_WIDTH')
         self.metadata_file_name = self.config['project']['METADATA_FILE_NAME']
@@ -57,6 +57,13 @@ class TrainerConfiguration(HandwritingConfiguration):
         self.seed = self.config.getint('train', 'SEED')
         self.early_stopping = self.config.getboolean('train', 'EARLY_STOPPING')
         self.learning_rate = self.config.getfloat('train', 'LEARNING_RATE')
+        self.batch_size = self.config.getint('train', 'BATCH_SIZE')
+        self.kernel_size = self.config.getint('train', 'KERNEL_SIZE')
+        self.activation_function = self.config['train']['ACTIVATION_FUNCTION']
+        self.num_units_dense = self.config.getint('train', 'NUM_UNITS_DENSE')
+        self.dropout = self.config.getfloat('train', 'DROPOUT')
+        self.num_units_lstm1 = self.config.getint('train', 'NUM_UNITS_LSTM1')
+        self.num_units_lstm2 = self.config.getint('train', 'NUM_UNITS_LSTM2')
 
 
 class TestConfiguration(HandwritingConfiguration):
