@@ -17,7 +17,7 @@ from arguments import ModelArguments
 
 def main():
     loss = LossChart()
-    c = TrainerConfiguration(arg.config_location)
+    c: TrainerConfiguration = arg.config
     dataset = TrainDataset(c)
     dataset.create_dataset(arg.batch_size if arg.batch_size else c.batch_size)
     tf.random.set_seed(c.seed)
